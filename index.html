@@ -242,7 +242,7 @@ guardar.onclick = async () => {
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
 
   for (const f of filas) {
-    const { error } = await supabaseClient.from("Asistencia").insert({
+    const { error } = await supabaseClient.from("asistencia").insert({
       fecha: fecha.value,
       profesor_id: profesor.value,
       materia_id: materia.value,
@@ -277,3 +277,4 @@ resetFormulario();
 </body>
 
 </html>
+
