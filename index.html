@@ -71,28 +71,40 @@
       background-color: white;
     }
 
-    /* TARJETAS DE ALUMNOS (Versión compacta) */
+   /* TARJETAS DE ALUMNOS (Versión compacta) */
 #lista-alumnos div[data-id] {
   background: #fafafa;
   border-left: 5px solid var(--secondary);
-  padding: 4px 10px;        /* Espacio interno mínimo */
-  margin-bottom: 5px;       /* Separación mínima entre alumnos */
-  display: flex;            /* Pone nombre y horas en la misma línea */
-  justify-content: space-between; /* Nombre a la izquierda, horas a la derecha */
-  align-items: center;      /* Centrado vertical perfecto */
+  padding: 4px 10px;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-radius: 4px;
 }
 
+/* --- ESTO ES LO QUE DEBES INSERTAR --- */
+.alumno-nombre { 
+  font-size: 0.85em; 
+  font-weight: 500;
+  margin-bottom: 0;
+  flex: 1; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--primary);
+}
+/* -------------------------------------- */
+
 /* SELECTORES DENTRO DE LA LISTA (Mini) */
 .selector-hora select {
-  padding: 2px 5px;   /* Reducido al mínimo */
-  height: 24px;       /* Alto fijo bajito */
-  font-size: 9px;    /* Letra más pequeña */
+  padding: 2px 5px;
+  height: 24px;
+  font-size: 9px;
   margin: 0;
-  width: auto;        /* Para que no ocupe todo el ancho */
+  width: auto;
 }
 
-/* Ajuste adicional para las etiquetas "Hora 1:" */
 .selector-hora span {
   font-size: 11px;
   color: #666;
@@ -289,6 +301,7 @@ resetFormulario();
 
 </body>
 </html>
+
 
 
 
