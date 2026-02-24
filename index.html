@@ -72,27 +72,26 @@
     }
 
     /* TARJETAS DE ALUMNOS */
-#lista-alumnos div {
+#lista-alumnos div[data-id] {
   background: #fafafa;
   border-left: 5px solid var(--secondary);
-  padding: 5px 10px; /* Reducido de 15px a 8px arriba y abajo */
-  margin-bottom: 5px; /* Reducido de 15px a 8px */
+  padding: 4px 10px;        /* Espacio interno mínimo */
+  margin-bottom: 5px;       /* Separación mínima entre alumnos */
+  display: flex;            /* Pone nombre y horas en la misma línea */
+  justify-content: space-between; /* Nombre a la izquierda, horas a la derecha */
+  align-items: center;      /* Centrado vertical perfecto */
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .alumno-nombre { 
-  font-size: 1em; /* Un poquito más chica la letra */
-  color: var(--primary); 
-  margin-bottom: 5px; /* Menos espacio abajo del nombre */
-  display: block; 
+  font-size: 0.95em; 
+  margin-bottom: 0;         /* Quitamos el margen para que no estire el alto */
+  flex: 1;                  /* Toma el espacio necesario a la izquierda */
 }
 
 .selector-hora { 
-  display: flex; 
-  align-items: center; 
-  gap: 5px; 
-  font-size: 0.85em; /* Texto de "Hora 1" más pequeño */
+  margin-top: 0;            /* Quitamos margen superior */
+  gap: 8px; 
 }
 
     /* BOTÓN */
@@ -286,6 +285,7 @@ resetFormulario();
 </body>
 
 </html>
+
 
 
 
