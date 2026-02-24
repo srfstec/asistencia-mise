@@ -99,21 +99,9 @@
     .selector-hora span { font-size: 11px; color: #666; margin-left: 5px; }
 
     /* COLORES DINÁMICOS */
-    .estado-ausente { 
-      background-color: #ffcccc !important; 
-      color: #900 !important; 
-      border-color: #f00 !important; 
-    }
-    .estado-tarde { 
-      background-color: #AAC2E3 !important; 
-      color: #0848A3 !important; 
-      border-color: #0452B5 !important; 
-    }
-    .estado-presente { 
-      background-color: #e6ffcc !important; 
-      color: #060 !important; 
-      border-color: #080 !important; 
-    }
+    .estado-ausente { background-color: #ffcccc !important; color: #900 !important; border-color: #f00 !important; }
+    .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; border-color: #0452B5 !important; }
+    .estado-presente { background-color: #e6ffcc !important; color: #060 !important; border-color: #080 !important; }
 
     #guardar {
       width: 100%;
@@ -131,6 +119,11 @@
     #guardar:disabled { background-color: #7f8c8d; }
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
     hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
+
+    /* Botones de acción repetida */
+    .btn-alerta { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
+    .btn-reemplazar { background-color: var(--success); }
+    .btn-salir { background-color: #e74c3c; }
   </style>
 </head>
 <body>
@@ -193,6 +186,8 @@ function resetFormulario() {
   materia.disabled = true;
   curso.disabled = true;
   guardar.disabled = true;
+  guardar.textContent = "Guardar asistencia";
+  mensaje.innerHTML = "";
   cargarProfesores();
 }
 
@@ -259,13 +254,19 @@ profesor.onchange = () => { if (profesor.value) cargarMaterias(profesor.value); 
 materia.onchange = () => { if (materia.value) cargarCursos(profesor.value, materia.value); };
 curso.onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
 
-guardar.onclick = async () => {
-  guardar.disabled = true;
-  guardar.textContent = "🚀 Guardando...";
-  const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
+// Lógica de Guardado con reemplazo
+guardar.onclick = () => ejecutarGuardado(false);
 
-  for (const f of filas) {
-    const { error } = await supabaseClient.from("asistencia").insert({
+async function ejecutarGuardado(forzar = false) {
+  guardar.disabled = true;
+  guardar.textContent = "🚀 Procesando...";
+  mensaje.innerHTML = "";
+  
+  const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
+  const registros = [];
+
+  filas.forEach(f => {
+    registros.push({
       fecha: fecha.value,
       profesor_id: profesor.value,
       materia_id: materia.value,
@@ -274,19 +275,49 @@ guardar.onclick = async () => {
       hora1: f.querySelector(".h1").value,
       hora2: f.querySelector(".h2").value
     });
+  });
 
-    if (error) {
+  // Si forzar es true, usa upsert para reemplazar
+  const query = forzar 
+    ? supabaseClient.from("asistencia").upsert(registros, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' })
+    : supabaseClient.from("asistencia").insert(registros);
+
+  const { error } = await query;
+
+  if (error) {
+    if (error.code === "23505") {
+      // Error de duplicado
+      mostrarPreguntaSobrescribir();
+    } else {
       mensaje.style.color = "red";
       mensaje.textContent = "❌ Error: " + error.message;
       guardar.disabled = false;
-      return;
+      guardar.textContent = "Guardar asistencia";
     }
+    return;
   }
 
   mensaje.style.color = "green";
-  mensaje.innerHTML = "<b>✅ ¡Asistencia guardada!</b>";
+  mensaje.innerHTML = "<b>✅ ¡Asistencia guardada con éxito!</b>";
   setTimeout(() => { resetFormulario(); }, 2000);
-};
+}
+
+function mostrarPreguntaSobrescribir() {
+  mensaje.style.color = "#d35400";
+  mensaje.innerHTML = `
+    <p>⚠️ Ya has cargado la asistencia para este curso pero ahora tiene cambios.<br>¿Quieres reemplazar la carga anterior por esta nueva?</p>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+      <button id="btn-continuar" class="btn-alerta btn-reemplazar">Continuar Guardando</button>
+      <button id="btn-salir" class="btn-alerta btn-salir">SALIR</button>
+    </div>
+  `;
+
+  document.getElementById("btn-continuar").onclick = () => ejecutarGuardado(true);
+  document.getElementById("btn-salir").onclick = () => resetFormulario();
+  
+  guardar.disabled = false;
+  guardar.textContent = "Guardar asistencia";
+}
 
 resetFormulario();
 </script>
