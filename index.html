@@ -1,4 +1,4 @@
-+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -12,8 +12,8 @@
       --primary: #2c3e50;
       --secondary: #3498db;
       --success: #27ae60;
-      --bg: #000000; /* Fondo negro como pediste */
-      --card: #B3B3F2; /* Fondo lila para el cuadro */
+      --bg: #000000; 
+      --card: #B3B3F2; 
       --text: #333;
     }
 
@@ -36,28 +36,19 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
 
-    /* CONTENEDOR DEL LOGO Y TÍTULO */
     .header-container {
       display: flex;
-      justify-content: space-between; /* Uno a cada esquina */
-      align-items: center; /* Alineados al centro vertical */
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 3px solid var(--secondary);
       margin-bottom: 20px;
       padding-bottom: 10px;
     }
 
-    .header-container h2 {
-      margin: 0;
-      color: var(--primary);
-    }
-
-    .logo {
-      max-height: 50px; /* Tamaño controlado del logo */
-      width: auto;
-    }
+    .header-container h2 { margin: 0; color: var(--primary); }
+    .logo { max-height: 50px; width: auto; }
 
     h3 { color: var(--primary); margin-top: 30px; }
-
     label { font-weight: 600; display: block; margin-bottom: 8px; color: #444; }
 
     select, input[type="date"] {
@@ -71,46 +62,59 @@
       background-color: white;
     }
 
-   /* TARJETAS DE ALUMNOS (Versión compacta) */
-#lista-alumnos div[data-id] {
-  background: #fafafa;
-  border-left: 5px solid var(--secondary);
-  padding: 4px 10px;
-  margin-bottom: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 4px;
-}
+    /* TARJETAS DE ALUMNOS */
+    #lista-alumnos div[data-id] {
+      background: #fafafa;
+      border-left: 5px solid var(--secondary);
+      padding: 4px 10px;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 4px;
+    }
 
-/* --- ESTO ES LO QUE DEBES INSERTAR --- */
-.alumno-nombre { 
-  font-size: 0.85em; 
-  font-weight: 500;
-  margin-bottom: 0;
-  flex: 1; 
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--primary);
-}
-/* -------------------------------------- */
+    .alumno-nombre { 
+      font-size: 0.85em; 
+      font-weight: 500;
+      margin-bottom: 0;
+      flex: 1; 
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--primary);
+    }
 
-/* SELECTORES DENTRO DE LA LISTA (Mini) */
-.selector-hora select {
-  padding: 2px 5px;
-  height: 24px;
-  font-size: 9px;
-  margin: 0;
-  width: auto;
-}
+    .selector-hora select {
+      padding: 2px 5px;
+      height: 24px;
+      font-size: 10px;
+      margin: 0;
+      width: auto;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-weight: bold;
+    }
 
-.selector-hora span {
-  font-size: 11px;
-  color: #666;
-}
+    .selector-hora span { font-size: 11px; color: #666; margin-left: 5px; }
 
-    /* BOTÓN */
+    /* COLORES DINÁMICOS */
+    .estado-ausente { 
+      background-color: #ffcccc !important; 
+      color: #900 !important; 
+      border-color: #f00 !important; 
+    }
+    .estado-tarde { 
+      background-color: #AAC2E3 !important; 
+      color: #0848A3 !important; 
+      border-color: #0452B5 !important; 
+    }
+    .estado-presente { 
+      background-color: #e6ffcc !important; 
+      color: #060 !important; 
+      border-color: #080 !important; 
+    }
+
     #guardar {
       width: 100%;
       background-color: var(--success);
@@ -121,46 +125,12 @@
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      transition: background 0.3s;
+      margin-top: 20px;
     }
 
-    #guardar:disabled { background-color: #7f8c8d; cursor: not-allowed; }
-
-    #mensaje { margin-top: 15px; text-align: center; font-size: 1em; font-weight: bold; }
-
+    #guardar:disabled { background-color: #7f8c8d; }
+    #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
     hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
-
-/* Colores de estado dinámicos */
-.estado-Ausente { 
-    background-color: #ffcccc !important; /* Rojo suave */
-    border-color: #ff0000 !important;
-    color: #900 !important;
-}
-
-.estado-Tarde { 
-    background-color: #ffe5cc !important; /* Naranja suave */
-    border-color: #ff8000 !important;
-    color: #940 !important;
-}
-
-.estado-Presente { 
-    background-color: #e6ffcc !important; /* Verde suave (opcional) */
-    border-color: #008000 !important;
-    color: #060 !important;
-}
-    function actualizarColor(elemento) {
-    const valor = elemento.value; // leerá "Presente", "Ausente" o "Tarde"
-    
-    elemento.classList.remove('estado-Ausente', 'estado-Tarde', 'estado-Presente');
-    
-    if (valor === "Ausente") {
-        elemento.classList.add('estado-Ausente');
-    } else if (valor === "Tarde") {
-        elemento.classList.add('estado-Tarde');
-    } else if (valor === "Presente") {
-        elemento.classList.add('estado-Presente');
-    }
-}
   </style>
 </head>
 <body>
@@ -187,15 +157,11 @@
 
   <h3>Lista de Alumnos</h3>
   <div id="lista-alumnos"></div>
-
   <div id="mensaje"></div>
   <button id="guardar" disabled>Guardar asistencia</button>
 </div>
 
 <script>
-/* =========================
-   CONFIGURACIÓN SUPABASE
-========================= */
 const supabaseClient = supabase.createClient(
   "https://htdmgshocecsuiykwwmt.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ"
@@ -209,9 +175,14 @@ const lista_alumnos = document.getElementById("lista-alumnos");
 const guardar = document.getElementById("guardar");
 const mensaje = document.getElementById("mensaje");
 
-/* =========================
-   RESET Y CARGA INICIAL
-========================= */
+function actualizarColor(elemento) {
+    const valor = elemento.value;
+    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
+    if (valor === "ausente") elemento.classList.add('estado-ausente');
+    else if (valor === "tarde") elemento.classList.add('estado-tarde');
+    else if (valor === "presente") elemento.classList.add('estado-presente');
+}
+
 function resetFormulario() {
   fecha.value = "";
   profesor.innerHTML = `<option value="">Seleccionar profesor</option>`;
@@ -222,23 +193,18 @@ function resetFormulario() {
   materia.disabled = true;
   curso.disabled = true;
   guardar.disabled = true;
-  guardar.textContent = "Guardar asistencia";
   cargarProfesores();
 }
 
 async function cargarProfesores() {
   const { data, error } = await supabaseClient.from("profesores").select("id, nombre").order("nombre");
-  if (error) return console.error(error);
+  if (error) return;
   profesor.innerHTML = `<option value="">Seleccionar profesor</option>`;
   data.forEach(p => { profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`; });
 }
 
-/* =========================
-   CARGA DINÁMICA
-========================= */
 async function cargarMaterias(profesorId) {
   materia.innerHTML = `<option value="">Seleccionar materia</option>`;
-  materia.disabled = true;
   const { data: rel } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesorId);
   if (!rel || !rel.length) return;
   const ids = rel.map(r => r.materia_id);
@@ -249,7 +215,6 @@ async function cargarMaterias(profesorId) {
 
 async function cargarCursos(profesorId, materiaId) {
   curso.innerHTML = `<option value="">Seleccionar curso</option>`;
-  curso.disabled = true;
   const { data: rel } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesorId).eq("materia_id", materiaId);
   if (!rel || !rel.length) return;
   const ids = rel.map(r => r.curso_id);
@@ -271,14 +236,14 @@ async function cargarAlumnos(cursoId) {
       <div data-id="${a.id}">
         <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
         <div class="selector-hora">
-          <span>Hora 1:</span>
-          <select class="h1" onchange="actualizarColor(this)">
+          <span>H1:</span>
+          <select class="h1 estado-presente" onchange="actualizarColor(this)">
             <option value="presente" selected>Presente</option>
             <option value="ausente">Ausente</option>
             <option value="tarde">Tarde</option>
           </select>
-          <span>Hora 2:</span>
-          <select class="h2" onchange="actualizarColor(this)">
+          <span>H2:</span>
+          <select class="h2 estado-presente" onchange="actualizarColor(this)">
             <option value="presente" selected>Presente</option>
             <option value="ausente">Ausente</option>
             <option value="tarde">Tarde</option>
@@ -289,22 +254,14 @@ async function cargarAlumnos(cursoId) {
   guardar.disabled = false;
 }
 
-/* =========================
-   FLUJO DE EVENTOS
-========================= */
 fecha.onchange = () => { profesor.disabled = !fecha.value; };
 profesor.onchange = () => { if (profesor.value) cargarMaterias(profesor.value); };
 materia.onchange = () => { if (materia.value) cargarCursos(profesor.value, materia.value); };
 curso.onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
 
-/* =========================
-   GUARDAR EN ASISTENCIA
-========================= */
 guardar.onclick = async () => {
   guardar.disabled = true;
   guardar.textContent = "🚀 Guardando...";
-  mensaje.textContent = "";
-
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
 
   for (const f of filas) {
@@ -319,44 +276,19 @@ guardar.onclick = async () => {
     });
 
     if (error) {
-      if (error.code === "23505") {
-        mensaje.style.color = "orange";
-        mensaje.textContent = "⚠️ Ya se registró asistencia hoy para este curso.";
-      } else {
-        mensaje.style.color = "red";
-        mensaje.textContent = "❌ Error: " + error.message;
-      }
+      mensaje.style.color = "red";
+      mensaje.textContent = "❌ Error: " + error.message;
       guardar.disabled = false;
-      guardar.textContent = "Guardar asistencia";
       return;
     }
   }
 
   mensaje.style.color = "green";
-  mensaje.innerHTML = "<b>✅ ¡Asistencia guardada con éxito!</b>";
+  mensaje.innerHTML = "<b>✅ ¡Asistencia guardada!</b>";
   setTimeout(() => { resetFormulario(); }, 2000);
 };
 
 resetFormulario();
-
-function actualizarColor(elemento) {
-    const valor = elemento.value;
-    
-    // Limpiamos clases anteriores
-    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
-    
-    // Aplicamos la nueva clase según la selección
-    if (valor === "Ausente") {
-        elemento.classList.add('estado-ausente');
-    } else if (valor === "Tarde") {
-        elemento.classList.add('estado-tarde');
-    } else if (valor === "Presente") {
-        elemento.classList.add('estado-presente');
-    }
-}
 </script>
-
 </body>
 </html>
-
-
