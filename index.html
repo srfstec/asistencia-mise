@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -71,7 +71,7 @@
       background-color: white;
     }
 
-    /* TARJETAS DE ALUMNOS */
+    /* TARJETAS DE ALUMNOS (Versión compacta) */
 #lista-alumnos div[data-id] {
   background: #fafafa;
   border-left: 5px solid var(--secondary);
@@ -83,15 +83,19 @@
   border-radius: 4px;
 }
 
-.alumno-nombre { 
-  font-size: 0.95em; 
-  margin-bottom: 0;         /* Quitamos el margen para que no estire el alto */
-  flex: 1;                  /* Toma el espacio necesario a la izquierda */
+/* SELECTORES DENTRO DE LA LISTA (Mini) */
+.selector-hora select {
+  padding: 2px 5px;   /* Reducido al mínimo */
+  height: 24px;       /* Alto fijo bajito */
+  font-size: 12px;    /* Letra más pequeña */
+  margin: 0;
+  width: auto;        /* Para que no ocupe todo el ancho */
 }
 
-.selector-hora { 
-  margin-top: 0;            /* Quitamos margen superior */
-  gap: 8px; 
+/* Ajuste adicional para las etiquetas "Hora 1:" */
+.selector-hora span {
+  font-size: 11px;
+  color: #666;
 }
 
     /* BOTÓN */
@@ -120,7 +124,8 @@
 <div class="container">
   <div class="header-container">
     <h2>Asistencia</h2>
-      </div>
+    <img src="Logo Mise 2025.png" alt="Logo" class="logo">
+  </div>
 
   <label for="fecha">📅 Fecha de clase:</label>
   <input type="date" id="fecha" />
@@ -283,7 +288,6 @@ resetFormulario();
 </script>
 
 </body>
-
 </html>
 
 
