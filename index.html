@@ -131,34 +131,34 @@
     hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
 
 /* Colores de estado dinámicos */
-.estado-ausente { 
+.estado-Ausente { 
     background-color: #ffcccc !important; /* Rojo suave */
     border-color: #ff0000 !important;
     color: #900 !important;
 }
 
-.estado-tarde { 
+.estado-Tarde { 
     background-color: #ffe5cc !important; /* Naranja suave */
     border-color: #ff8000 !important;
     color: #940 !important;
 }
 
-.estado-presente { 
+.estado-Presente { 
     background-color: #e6ffcc !important; /* Verde suave (opcional) */
     border-color: #008000 !important;
     color: #060 !important;
 }
     function actualizarColor(elemento) {
-    const valor = elemento.value; // leerá "presente", "ausente" o "tarde"
+    const valor = elemento.value; // leerá "Presente", "Ausente" o "Tarde"
     
-    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
+    elemento.classList.remove('estado-Ausente', 'estado-Tarde', 'estado-Presente');
     
-    if (valor === "ausente") {
-        elemento.classList.add('estado-ausente');
-    } else if (valor === "tarde") {
-        elemento.classList.add('estado-tarde');
-    } else if (valor === "presente") {
-        elemento.classList.add('estado-presente');
+    if (valor === "Ausente") {
+        elemento.classList.add('estado-Ausente');
+    } else if (valor === "Tarde") {
+        elemento.classList.add('estado-Tarde');
+    } else if (valor === "Presente") {
+        elemento.classList.add('estado-Presente');
     }
 }
   </style>
@@ -358,4 +358,5 @@ function actualizarColor(elemento) {
 
 </body>
 </html>
+
 
