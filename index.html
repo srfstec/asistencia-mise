@@ -1,4 +1,4 @@
-<!DOCTYPE html>
++<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -147,6 +147,19 @@
     background-color: #e6ffcc !important; /* Verde suave (opcional) */
     border-color: #008000 !important;
     color: #060 !important;
+}
+    function actualizarColor(elemento) {
+    const valor = elemento.value; // leerá "presente", "ausente" o "tarde"
+    
+    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
+    
+    if (valor === "ausente") {
+        elemento.classList.add('estado-ausente');
+    } else if (valor === "tarde") {
+        elemento.classList.add('estado-tarde');
+    } else if (valor === "presente") {
+        elemento.classList.add('estado-presente');
+    }
 }
   </style>
 </head>
@@ -345,3 +358,4 @@ function actualizarColor(elemento) {
 
 </body>
 </html>
+
