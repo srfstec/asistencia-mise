@@ -129,6 +129,25 @@
     #mensaje { margin-top: 15px; text-align: center; font-size: 1em; font-weight: bold; }
 
     hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
+
+/* Colores de estado dinámicos */
+.estado-ausente { 
+    background-color: #ffcccc !important; /* Rojo suave */
+    border-color: #ff0000 !important;
+    color: #900 !important;
+}
+
+.estado-tarde { 
+    background-color: #ffe5cc !important; /* Naranja suave */
+    border-color: #ff8000 !important;
+    color: #940 !important;
+}
+
+.estado-presente { 
+    background-color: #e6ffcc !important; /* Verde suave (opcional) */
+    border-color: #008000 !important;
+    color: #060 !important;
+}
   </style>
 </head>
 <body>
@@ -233,15 +252,24 @@ async function cargarAlumnos(cursoId) {
   const ids = rel.map(r => r.alumno_id);
   const { data } = await supabaseClient.from("alumnos").select("id, nombre, apellido").in("id", ids).order("apellido");
   lista_alumnos.innerHTML = "";
+  
   data.forEach(a => {
     lista_alumnos.innerHTML += `
       <div data-id="${a.id}">
         <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
         <div class="selector-hora">
           <span>Hora 1:</span>
-          <select class="h1"><option value="presente" selected>Presente</option><option value="ausente">Ausente</option><option value="tarde">Tarde</option></select>
+          <select class="h1" onchange="actualizarColor(this)">
+            <option value="presente" selected>Presente</option>
+            <option value="ausente">Ausente</option>
+            <option value="tarde">Tarde</option>
+          </select>
           <span>Hora 2:</span>
-          <select class="h2"><option value="presente" selected>Presente</option><option value="ausente">Ausente</option><option value="tarde">Tarde</option></select>
+          <select class="h2" onchange="actualizarColor(this)">
+            <option value="presente" selected>Presente</option>
+            <option value="ausente">Ausente</option>
+            <option value="tarde">Tarde</option>
+          </select>
         </div>
       </div>`;
   });
@@ -297,13 +325,23 @@ guardar.onclick = async () => {
 };
 
 resetFormulario();
+
+function actualizarColor(elemento) {
+    const valor = elemento.value;
+    
+    // Limpiamos clases anteriores
+    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
+    
+    // Aplicamos la nueva clase según la selección
+    if (valor === "Ausente") {
+        elemento.classList.add('estado-ausente');
+    } else if (valor === "Tarde") {
+        elemento.classList.add('estado-tarde');
+    } else if (valor === "Presente") {
+        elemento.classList.add('estado-presente');
+    }
+}
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
