@@ -5,247 +5,144 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Mise SEC - Control de Asistencia</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  
   <style>
-    :root {
-      --primary: #2c3e50;
-      --secondary: #3498db;
-      --success: #27ae60;
-      --bg: #000000; 
-      --card: #B3B3F2; 
-      --text: #333;
-    }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: var(--card);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    }
-
-    .header-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid var(--secondary);
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-    }
-
-    .header-container h2 { margin: 0; color: var(--primary); }
-    .logo { max-height: 50px; width: auto; }
-
-    h3 { color: var(--primary); margin-top: 30px; }
-    label { font-weight: 600; display: block; margin-bottom: 8px; color: #444; }
-
-    select, input[type="date"] {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
-      border: 1px solid #999;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
-      background-color: white;
-    }
-
-    /* TARJETAS DE ALUMNOS */
-    #lista-alumnos div[data-id] {
-      background: #fafafa;
-      border-left: 5px solid var(--secondary);
-      padding: 10px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 4px;
-    }
-
-    .alumno-nombre { 
-      font-size: 1em; /* TAMAÑO ORIGINAL RECUPERADO */
-      font-weight: 600;
-      margin-bottom: 0;
-      flex: 1; 
-      color: var(--primary);
-    }
-
+    :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 600px; background: var(--card); padding: 25px; border-radius: 12px; }
+    .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--secondary); margin-bottom: 20px; }
+    .logo { max-height: 50px; }
+    label { font-weight: 600; display: block; margin-bottom: 5px; color: #333; }
+    select, input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #999; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    
+    /* LISTA ALUMNOS */
+    #lista-alumnos div[data-id] { background: #fff; border-left: 5px solid var(--secondary); padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+    .alumno-nombre { font-size: 1em; font-weight: 600; flex: 1; color: var(--primary); }
     .selector-hora { display: flex; align-items: center; gap: 8px; }
-
-    .selector-hora select {
-      padding: 5px;
-      height: auto;
-      font-size: 12px;
-      margin: 0;
-      width: auto;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-weight: bold;
-    }
-
-    .selector-hora span { font-size: 11px; color: #666; font-weight: bold; }
-
+    .selector-hora select { width: auto; font-size: 12px; margin: 0; padding: 5px; }
+    
+    /* COLORES */
     .estado-ausente { background-color: #ffcccc !important; color: #900 !important; }
     .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; }
     .estado-presente { background-color: #e6ffcc !important; color: #060 !important; }
-
-    #guardar {
-      width: 100%;
-      background-color: var(--success);
-      color: white;
-      padding: 15px;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    #guardar:disabled { background-color: #7f8c8d; }
+    
+    #guardar { width: 100%; background: var(--success); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    #guardar:disabled { background: #7f8c8d; }
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
-    hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
-
-    .btn-alerta { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
-    .btn-reemplazar { background-color: var(--success); }
-    .btn-salir { background-color: #e74c3c; }
+    .btn-alerta { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; }
   </style>
 </head>
 <body>
-
 <div class="container">
-  <div class="header-container">
-    <h2>Asistencia</h2>
-    <img src="Logo Mise 2025.png" alt="Logo" class="logo">
-  </div>
+  <div class="header-container"><h2>Asistencia</h2><img src="Logo Mise 2025.png" class="logo"></div>
 
-  <label for="fecha">📅 Fecha de clase:</label>
-  <input type="date" id="fecha" />
+  <label>📅 Fecha:</label>
+  <input type="date" id="fecha">
 
-  <label for="profesor">👤 Profesor:</label>
+  <label>👤 Profesor:</label>
   <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
 
-  <label for="materia">📚 Materia:</label>
+  <label>📚 Materia:</label>
   <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
 
-  <label for="cant-horas">⏱️ Cantidad de horas:</label>
+  <label>⏱️ Cantidad de horas:</label>
   <select id="cant-horas" disabled>
     <option value="1">1 Hora</option>
     <option value="2" selected>2 Horas</option>
   </select>
 
-  <label for="curso">🏫 Curso:</label>
-  <select id="curso" disabled><option value="">Seleccione horas...</option></select>
+  <label>🏫 Curso:</label>
+  <select id="curso" disabled><option value="">Seleccione materia...</option></select>
 
   <hr>
-
-  <h3>Lista de Alumnos</h3>
   <div id="lista-alumnos"></div>
   <div id="mensaje"></div>
   <button id="guardar" disabled>Guardar asistencia</button>
 </div>
 
 <script>
-const supabaseClient = supabase.createClient(
-  "https://htdmgshocecsuiykwwmt.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ"
-);
+const supabaseClient = supabase.createClient("https://htdmgshocecsuiykwwmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ");
 
-const fecha = document.getElementById("fecha");
-const profesor = document.getElementById("profesor");
-const materia = document.getElementById("materia");
-const horasSelector = document.getElementById("cant-horas");
-const curso = document.getElementById("curso");
-const lista_alumnos = document.getElementById("lista-alumnos");
-const guardar = document.getElementById("guardar");
-const mensaje = document.getElementById("mensaje");
+const fecha = document.getElementById("fecha"), profesor = document.getElementById("profesor"), materia = document.getElementById("materia"), horas = document.getElementById("cant-horas"), curso = document.getElementById("curso"), lista = document.getElementById("lista-alumnos"), btnG = document.getElementById("guardar"), mensaje = document.getElementById("mensaje");
 
-function actualizarColor(elemento) {
-    const valor = elemento.value;
-    elemento.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
-    if (valor === "ausente") elemento.classList.add('estado-ausente');
-    else if (valor === "tarde") elemento.classList.add('estado-tarde');
-    else if (valor === "presente") elemento.classList.add('estado-presente');
+function actualizarColor(el) {
+  el.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
+  if (el.value) el.classList.add('estado-' + el.value);
 }
 
-function resetFormulario() {
-  fecha.value = "";
-  profesor.innerHTML = `<option value="">Seleccionar profesor</option>`;
-  materia.innerHTML = `<option value="">Seleccionar materia</option>`;
-  horasSelector.disabled = true;
-  curso.innerHTML = `<option value="">Seleccionar curso</option>`;
-  lista_alumnos.innerHTML = "";
-  profesor.disabled = true;
-  materia.disabled = true;
-  curso.disabled = true;
-  guardar.disabled = true;
-  guardar.textContent = "Guardar asistencia";
-  mensaje.innerHTML = "";
-  cargarProfesores();
-}
+// 1. Al cambiar fecha habilitar profesor
+fecha.onchange = async () => {
+  if (!fecha.value) return;
+  const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
+  profesor.innerHTML = '<option value="">Seleccionar...</option>';
+  data.forEach(p => profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`);
+  profesor.disabled = false;
+};
 
-async function cargarProfesores() {
-  const { data, error } = await supabaseClient.from("profesores").select("id, nombre").order("nombre");
-  if (error) return;
-  profesor.innerHTML = `<option value="">Seleccionar profesor</option>`;
-  data.forEach(p => { profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`; });
-}
-
-async function cargarMaterias(profesorId) {
-  materia.innerHTML = `<option value="">Seleccionar materia</option>`;
-  const { data: rel } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesorId);
-  if (!rel || !rel.length) return;
-  const ids = rel.map(r => r.materia_id);
-  const { data } = await supabaseClient.from("materias").select("id, nombre").in("id", ids).order("nombre");
+// 2. Al cambiar profesor habilitar materia
+profesor.onchange = async () => {
+  const { data } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
+  const ids = data.map(r => r.materia_id);
+  const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids).order("nombre");
+  materia.innerHTML = '<option value="">Seleccionar...</option>';
   materia.disabled = false;
-  data.forEach(m => { materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`; });
-}
+  mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
+};
 
-async function cargarCursos(profesorId, materiaId) {
-  curso.innerHTML = `<option value="">Seleccionar curso</option>`;
-  const { data: rel } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesorId).eq("materia_id", materiaId);
-  if (!rel || !rel.length) return;
-  const ids = rel.map(r => r.curso_id);
-  const { data } = await supabaseClient.from("curso").select("id, nombre, curso_base").in("id", ids).order("nombre");
+// 3. Al cambiar materia habilitar Horas y Curso
+materia.onchange = async () => {
+  horas.disabled = false;
+  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
+  const ids = data.map(r => r.curso_id);
+  const { data: curs } = await supabaseClient.from("curso").select("*").in("id", ids).order("nombre");
+  curso.innerHTML = '<option value="">Seleccionar...</option>';
   curso.disabled = false;
-  data.forEach(c => { curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`; });
+  curs.forEach(c => curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`);
+};
+
+// 4. Dibujar alumnos (se dispara con Curso o con Cambio de Horas)
+async function dibujarAlumnos() {
+  if (!curso.value) return;
+  lista.innerHTML = "Cargando...";
+  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
+  const ids = rel.map(r => r.alumno_id);
+  const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", ids).order("apellido");
+  
+  lista.innerHTML = "";
+  alus.forEach(a => {
+    let hHtml = `<span>H1:</span><select class="h1 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
+    if (horas.value === "2") {
+      hHtml += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
+    }
+    lista.innerHTML += `<div data-id="${a.id}"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><div class="selector-hora">${hHtml}</div></div>`;
+  });
+  btnG.disabled = false;
 }
 
-async function cargarAlumnos(cursoId) {
-  if(!cursoId) return;
-  const horasElegidas = horasSelector.value;
-  lista_alumnos.innerHTML = "Cargando alumnos...";
-  
-  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", cursoId);
-  if (!rel || !rel.length) { lista_alumnos.innerHTML = "No hay alumnos en este curso"; return; }
-  
-  const ids = rel.map(r => r.alumno_id);
-  const { data } = await supabaseClient.from("alumnos").select("id, nombre, apellido").in("id", ids).order("apellido");
-  lista_alumnos.innerHTML = "";
-  
-  data.forEach(a => {
-    let selectoresHtml = `<span>H1:</span>
-      <select class="h1 estado-presente" onchange="actualizarColor(this)">
-        <option value="presente" selected>P</option>
-        <option value="ausente">A</option>
-        <option value="tarde">T</option>
-      </select>`;
+curso.onchange = dibujarAlumnos;
+horas.onchange = dibujarAlumnos;
 
-    if (horasElegidas === "2") {
-      selectoresHtml += `<span>H2:</span>
-        <select class="h2 estado-presente" onchange="actualizarColor(this)">
-          <option value="presente" selected>P</option>
-          <option value="ausente">A</option>
-          <option value="tarde">T</option>
-        </select>`;
+// 5. Guardar
+btnG.onclick = () => enviar(false);
+
+async function enviar(forzar) {
+  btnG.disabled = true;
+  const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
+  const regs = Array.from(filas).map(f => ({
+    fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
+    alumno_id: f.dataset.id, hora1: f.querySelector(".h1").value,
+    hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
+  }));
+
+  const { error } = await supabaseClient.from("asistencia")[forzar ? 'upsert' : 'insert'](regs, forzar ? { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' } : {});
+
+  if (error && error.code === "23505") {
+    mensaje.innerHTML = `⚠️ Ya existe carga. <button class="btn-alerta" style="background:green" onclick="enviar(true)">REEMPLAZAR</button> <button class="btn-alerta" style="background:red" onclick="location.reload()">SALIR</button>`;
+  } else {
+    mensaje.innerHTML = error ? "❌ Error" : "✅ Guardado correctamente";
+    if (!error) setTimeout(() => location.reload(), 2000);
+  }
+  btnG.disabled = false;
+}
+</script>
+</body>
+</html>
