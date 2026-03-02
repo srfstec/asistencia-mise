@@ -146,6 +146,12 @@
   <label for="curso">🏫 Curso:</label>
   <select id="curso" disabled></select>
 
+<label for="cant-horas">⏱️ Cantidad de horas:</label>
+<select id="cant-horas">
+  <option value="1">1 Hora</option>
+  <option value="2" selected>2 Horas</option>
+</select>
+
   <hr>
 
   <h3>Lista de Alumnos</h3>
@@ -219,30 +225,42 @@ async function cargarCursos(profesorId, materiaId) {
 }
 
 async function cargarAlumnos(cursoId) {
+  const horasElegidas = document.getElementById("cant-horas").value; // Leemos 1 o 2
   lista_alumnos.innerHTML = "Cargando alumnos...";
+  
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", cursoId);
   if (!rel || !rel.length) { lista_alumnos.innerHTML = "No hay alumnos en este curso"; return; }
+  
   const ids = rel.map(r => r.alumno_id);
   const { data } = await supabaseClient.from("alumnos").select("id, nombre, apellido").in("id", ids).order("apellido");
   lista_alumnos.innerHTML = "";
   
   data.forEach(a => {
+    // Creamos la columna de la Hora 1 (siempre está)
+    let selectoresHtml = `
+      <span>H1:</span>
+      <select class="h1 estado-presente" onchange="actualizarColor(this)">
+        <option value="presente" selected>Presente</option>
+        <option value="ausente">Ausente</option>
+        <option value="tarde">Tarde</option>
+      </select>`;
+
+    // Si eligió 2 horas, agregamos la columna de la Hora 2
+    if (horasElegidas === "2") {
+      selectoresHtml += `
+        <span>H2:</span>
+        <select class="h2 estado-presente" onchange="actualizarColor(this)">
+          <option value="presente" selected>Presente</option>
+          <option value="ausente">Ausente</option>
+          <option value="tarde">Tarde</option>
+        </select>`;
+    }
+
     lista_alumnos.innerHTML += `
       <div data-id="${a.id}">
         <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
         <div class="selector-hora">
-          <span>H1:</span>
-          <select class="h1 estado-presente" onchange="actualizarColor(this)">
-            <option value="presente" selected>Presente</option>
-            <option value="ausente">Ausente</option>
-            <option value="tarde">Tarde</option>
-          </select>
-          <span>H2:</span>
-          <select class="h2 estado-presente" onchange="actualizarColor(this)">
-            <option value="presente" selected>Presente</option>
-            <option value="ausente">Ausente</option>
-            <option value="tarde">Tarde</option>
-          </select>
+          ${selectoresHtml}
         </div>
       </div>`;
   });
@@ -258,23 +276,34 @@ curso.onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
 guardar.onclick = () => ejecutarGuardado(false);
 
 async function ejecutarGuardado(forzar = false) {
+  // --- ESCUDO DE VALIDACIÓN ---
+  if (!fecha.value || !profesor.value || !materia.value || !curso.value) {
+    mensaje.style.color = "red";
+    mensaje.textContent = "❌ Por favor, completa todos los campos superiores antes de guardar.";
+    return;
+  }
+  // -----------------------------
+
   guardar.disabled = true;
   guardar.textContent = "🚀 Procesando...";
   mensaje.innerHTML = "";
+  
+  // ... resto del código ...
   
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
   const registros = [];
 
   filas.forEach(f => {
-    registros.push({
+    const datoAlumno = {
       fecha: fecha.value,
       profesor_id: profesor.value,
       materia_id: materia.value,
       curso_id: curso.value,
       alumno_id: f.dataset.id,
       hora1: f.querySelector(".h1").value,
-      hora2: f.querySelector(".h2").value
-    });
+      hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null // Si no existe H2, manda null
+    };
+    registros.push(datoAlumno);
   });
 
   // Si forzar es true, usa upsert para reemplazar
@@ -312,6 +341,7 @@ function mostrarPreguntaSobrescribir() {
     </div>
   `;
 
+  document.getElementById("cant-horas").onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
   document.getElementById("btn-continuar").onclick = () => ejecutarGuardado(true);
   document.getElementById("btn-salir").onclick = () => resetFormulario();
   
