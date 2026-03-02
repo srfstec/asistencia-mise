@@ -3,37 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Mise SEC - Asistencia Dinámica</title>
+  <title>App Mise SEC - Asistencia</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
     body { font-family: sans-serif; background: var(--bg); padding: 20px; display: flex; justify-content: center; }
     .container { width: 100%; max-width: 600px; background: var(--card); padding: 25px; border-radius: 12px; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--secondary); margin-bottom: 20px; }
-    select, input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #999; }
-    #lista-alumnos div[data-id] { background: #fff; border-left: 5px solid var(--secondary); padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
-    .alumno-nombre { font-size: 0.9em; flex: 1; color: var(--primary); }
-    .selector-hora select { width: auto; font-size: 11px; margin: 0 5px; font-weight: bold; }
-    /* COLORES */
+    
+    /* Estilos de inputs y etiquetas */
+    label { font-weight: bold; display: block; margin-bottom: 5px; color: var(--primary); }
+    select, input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #999; font-size: 16px; }
+    
+    /* Lista de alumnos - Nombres tamaño original */
+    #lista-alumnos div[data-id] { background: #fff; border-left: 5px solid var(--secondary); padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+    .alumno-nombre { flex: 1; color: var(--primary); font-size: 1em; } /* Tamaño normal recuperado */
+    
+    .selector-hora { display: flex; align-items: center; gap: 8px; }
+    .selector-hora select { width: auto; font-size: 12px; margin: 0; font-weight: bold; padding: 5px; }
+    
+    /* Colores de estados */
     .estado-ausente { background: #ffcccc !important; color: #900 !important; }
     .estado-tarde { background: #AAC2E3 !important; color: #0848A3 !important; }
     .estado-presente { background: #e6ffcc !important; color: #060 !important; }
-    #guardar { width: 100%; background: var(--success); color: #fff; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    
+    #guardar { width: 100%; background: var(--success); color: #fff; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .btn-alerta { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: #fff; font-weight: bold; margin: 5px; }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header"><h2>Asistencia</h2><img src="Logo Mise 2025.png" height="50"></div>
-  <label>📅 Fecha:</label><input type="date" id="fecha">
-  <label>👤 Profesor:</label><select id="profesor" disabled></select>
-  <label>📚 Materia:</label><select id="materia" disabled></select>
-  <label>🏫 Curso:</label><select id="curso" disabled></select>
-  <label>⏱️ Horas a dictar:</label>
-  <select id="cant-horas">
+  
+  <label>📅 Fecha:</label>
+  <input type="date" id="fecha">
+  
+  <label>👤 Profesor:</label>
+  <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
+  
+  <label>📚 Materia:</label>
+  <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
+  
+  <label>⏱️ Cantidad de horas:</label>
+  <select id="cant-horas" disabled>
     <option value="1">1 Hora</option>
     <option value="2" selected>2 Horas</option>
   </select>
+
+  <label>🏫 Curso:</label>
+  <select id="curso" disabled><option value="">Seleccione horas...</option></select>
+  
   <hr>
   <div id="lista-alumnos"></div>
   <div id="mensaje"></div>
@@ -43,7 +62,14 @@
 <script>
 const supabaseClient = supabase.createClient("https://htdmgshocecsuiykwwmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ");
 
-const fecha = document.getElementById("fecha"), profesor = document.getElementById("profesor"), materia = document.getElementById("materia"), curso = document.getElementById("curso"), cantHoras = document.getElementById("cant-horas"), lista = document.getElementById("lista-alumnos"), btnG = document.getElementById("guardar"), mensaje = document.getElementById("mensaje");
+const fecha = document.getElementById("fecha"), 
+      profesor = document.getElementById("profesor"), 
+      materia = document.getElementById("materia"), 
+      curso = document.getElementById("curso"), 
+      cantHoras = document.getElementById("cant-horas"), 
+      lista = document.getElementById("lista-alumnos"), 
+      btnG = document.getElementById("guardar"), 
+      mensaje = document.getElementById("mensaje");
 
 function actualizarColor(e) {
   e.classList.remove('estado-ausente','estado-tarde','estado-presente');
@@ -56,7 +82,10 @@ async function cargarProfesores() {
   data.forEach(p => profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`);
 }
 
+fecha.onchange = () => { profesor.disabled = false; cargarProfesores(); };
+
 profesor.onchange = async () => {
+  if(!profesor.value) return;
   const { data } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
   const ids = data.map(r => r.materia_id);
   const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids);
@@ -66,6 +95,8 @@ profesor.onchange = async () => {
 };
 
 materia.onchange = async () => {
+  if(!materia.value) return;
+  cantHoras.disabled = false; // Se habilita al elegir materia
   const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
   const ids = data.map(r => r.curso_id);
   const { data: curs } = await supabaseClient.from("curso").select("*").in("id", ids);
@@ -77,29 +108,47 @@ materia.onchange = async () => {
 async function dibujarAlumnos() {
   if(!curso.value) return;
   lista.innerHTML = "Cargando...";
+  
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
   const ids = rel.map(r => r.alumno_id);
   const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", ids).order("apellido");
+  
   lista.innerHTML = "";
+  const vHoras = cantHoras.value;
+
   alus.forEach(a => {
-    let htmlHoras = `<span>H1:</span><select class="h1 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
-    if(cantHoras.value === "2") {
-      htmlHoras += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
+    let htmlHoras = `<span>H1:</span>
+      <select class="h1 estado-presente" onchange="actualizarColor(this)">
+        <option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option>
+      </select>`;
+    
+    if(vHoras === "2") {
+      htmlHoras += `<span>H2:</span>
+        <select class="h2 estado-presente" onchange="actualizarColor(this)">
+          <option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option>
+        </select>`;
     }
-    lista.innerHTML += `<div data-id="${a.id}"><b class="alumno-nombre">${a.apellido}</b><div class="selector-hora">${htmlHoras}</div></div>`;
+
+    lista.innerHTML += `
+      <div data-id="${a.id}">
+        <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
+        <div class="selector-hora">${htmlHoras}</div>
+      </div>`;
   });
   btnG.disabled = false;
 }
 
- cantHoras.onchange = dibujarAlumnos;
- curso.onchange = dibujarAlumnos;
-fecha.onchange = () => profesor.disabled = false;
+// Estos dos eventos refrescan la lista automáticamente
+curso.onchange = dibujarAlumnos;
+cantHoras.onchange = dibujarAlumnos;
 
 btnG.onclick = () => enviarDatos(false);
 
 async function enviarDatos(forzar) {
-  if(!fecha.value || !curso.value) return alert("Faltan datos");
+  if(!fecha.value || !curso.value) return;
   btnG.disabled = true;
+  btnG.textContent = "Guardando...";
+  
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
   const registros = Array.from(filas).map(f => ({
     fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
@@ -107,22 +156,27 @@ async function enviarDatos(forzar) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  const query = forzar ? supabaseClient.from("asistencia").upsert(registros, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' }) : supabaseClient.from("asistencia").insert(registros);
+  const query = forzar 
+    ? supabaseClient.from("asistencia").upsert(registros, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' }) 
+    : supabaseClient.from("asistencia").insert(registros);
+    
   const { error } = await query;
 
   if(error && error.code === "23505") {
-    mensaje.innerHTML = `<p>⚠️ Ya existe carga. ¿Reemplazar?</p>
-      <button onclick="enviarDatos(true)" class="btn-alerta" style="background:green">SI</button>
-      <button onclick="location.reload()" class="btn-alerta" style="background:red">SALIR</button>`;
+    mensaje.innerHTML = `<div style="padding:10px; border:2px solid orange; border-radius:8px; margin-top:10px;">
+        <p>⚠️ Ya existe carga. ¿Reemplazar?</p>
+        <button onclick="enviarDatos(true)" class="btn-alerta" style="background:green">SÍ</button>
+        <button onclick="location.reload()" class="btn-alerta" style="background:red">NO</button>
+      </div>`;
+  } else if (error) {
+    mensaje.innerHTML = "❌ Error: " + error.message;
   } else {
-    mensaje.innerHTML = error ? "❌ Error" : "✅ Guardado";
-    if(!error) setTimeout(() => location.reload(), 2000);
+    mensaje.innerHTML = "✅ Guardado";
+    setTimeout(() => location.reload(), 2000);
   }
   btnG.disabled = false;
+  btnG.textContent = "Guardar asistencia";
 }
-
-cargarProfesores();
 </script>
 </body>
 </html>
-
