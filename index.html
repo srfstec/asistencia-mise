@@ -91,8 +91,8 @@ async function dibujarAlumnos() {
   btnG.disabled = false;
 }
 
-curso.onchange = dibujarAlumnos;
-cantHoras.onchange = dibujarAlumnos;
+ cantHoras.onchange = dibujarAlumnos;
+ curso.onchange = dibujarAlumnos;
 fecha.onchange = () => profesor.disabled = false;
 
 btnG.onclick = () => enviarDatos(false);
@@ -125,3 +125,4 @@ cargarProfesores();
 </script>
 </body>
 </html>
+
