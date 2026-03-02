@@ -7,7 +7,6 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
   <style>
-    /* VARIABLES DE COLOR */
     :root {
       --primary: #2c3e50;
       --secondary: #3498db;
@@ -66,8 +65,8 @@
     #lista-alumnos div[data-id] {
       background: #fafafa;
       border-left: 5px solid var(--secondary);
-      padding: 4px 10px;
-      margin-bottom: 5px;
+      padding: 10px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -75,20 +74,19 @@
     }
 
     .alumno-nombre { 
-      font-size: 0.85em; 
-      font-weight: 500;
+      font-size: 1em; /* TAMAÑO ORIGINAL RECUPERADO */
+      font-weight: 600;
       margin-bottom: 0;
       flex: 1; 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       color: var(--primary);
     }
 
+    .selector-hora { display: flex; align-items: center; gap: 8px; }
+
     .selector-hora select {
-      padding: 2px 5px;
-      height: 24px;
-      font-size: 10px;
+      padding: 5px;
+      height: auto;
+      font-size: 12px;
       margin: 0;
       width: auto;
       border-radius: 4px;
@@ -96,12 +94,11 @@
       font-weight: bold;
     }
 
-    .selector-hora span { font-size: 11px; color: #666; margin-left: 5px; }
+    .selector-hora span { font-size: 11px; color: #666; font-weight: bold; }
 
-    /* COLORES DINÁMICOS */
-    .estado-ausente { background-color: #ffcccc !important; color: #900 !important; border-color: #f00 !important; }
-    .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; border-color: #0452B5 !important; }
-    .estado-presente { background-color: #e6ffcc !important; color: #060 !important; border-color: #080 !important; }
+    .estado-ausente { background-color: #ffcccc !important; color: #900 !important; }
+    .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; }
+    .estado-presente { background-color: #e6ffcc !important; color: #060 !important; }
 
     #guardar {
       width: 100%;
@@ -120,7 +117,6 @@
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
     hr { border: 0; border-top: 1px solid #999; margin: 25px 0; }
 
-    /* Botones de acción repetida */
     .btn-alerta { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
     .btn-reemplazar { background-color: var(--success); }
     .btn-salir { background-color: #e74c3c; }
@@ -138,19 +134,19 @@
   <input type="date" id="fecha" />
 
   <label for="profesor">👤 Profesor:</label>
-  <select id="profesor" disabled></select>
+  <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
 
   <label for="materia">📚 Materia:</label>
-  <select id="materia" disabled></select>
+  <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
+
+  <label for="cant-horas">⏱️ Cantidad de horas:</label>
+  <select id="cant-horas" disabled>
+    <option value="1">1 Hora</option>
+    <option value="2" selected>2 Horas</option>
+  </select>
 
   <label for="curso">🏫 Curso:</label>
-  <select id="curso" disabled></select>
-
-<label for="cant-horas">⏱️ Cantidad de horas:</label>
-<select id="cant-horas">
-  <option value="1">1 Hora</option>
-  <option value="2" selected>2 Horas</option>
-</select>
+  <select id="curso" disabled><option value="">Seleccione horas...</option></select>
 
   <hr>
 
@@ -169,6 +165,7 @@ const supabaseClient = supabase.createClient(
 const fecha = document.getElementById("fecha");
 const profesor = document.getElementById("profesor");
 const materia = document.getElementById("materia");
+const horasSelector = document.getElementById("cant-horas");
 const curso = document.getElementById("curso");
 const lista_alumnos = document.getElementById("lista-alumnos");
 const guardar = document.getElementById("guardar");
@@ -186,6 +183,7 @@ function resetFormulario() {
   fecha.value = "";
   profesor.innerHTML = `<option value="">Seleccionar profesor</option>`;
   materia.innerHTML = `<option value="">Seleccionar materia</option>`;
+  horasSelector.disabled = true;
   curso.innerHTML = `<option value="">Seleccionar curso</option>`;
   lista_alumnos.innerHTML = "";
   profesor.disabled = true;
@@ -225,7 +223,8 @@ async function cargarCursos(profesorId, materiaId) {
 }
 
 async function cargarAlumnos(cursoId) {
-  const horasElegidas = document.getElementById("cant-horas").value; // Leemos 1 o 2
+  if(!cursoId) return;
+  const horasElegidas = horasSelector.value;
   lista_alumnos.innerHTML = "Cargando alumnos...";
   
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", cursoId);
@@ -236,120 +235,17 @@ async function cargarAlumnos(cursoId) {
   lista_alumnos.innerHTML = "";
   
   data.forEach(a => {
-    // Creamos la columna de la Hora 1 (siempre está)
-    let selectoresHtml = `
-      <span>H1:</span>
+    let selectoresHtml = `<span>H1:</span>
       <select class="h1 estado-presente" onchange="actualizarColor(this)">
-        <option value="presente" selected>Presente</option>
-        <option value="ausente">Ausente</option>
-        <option value="tarde">Tarde</option>
+        <option value="presente" selected>P</option>
+        <option value="ausente">A</option>
+        <option value="tarde">T</option>
       </select>`;
 
-    // Si eligió 2 horas, agregamos la columna de la Hora 2
     if (horasElegidas === "2") {
-      selectoresHtml += `
-        <span>H2:</span>
+      selectoresHtml += `<span>H2:</span>
         <select class="h2 estado-presente" onchange="actualizarColor(this)">
-          <option value="presente" selected>Presente</option>
-          <option value="ausente">Ausente</option>
-          <option value="tarde">Tarde</option>
+          <option value="presente" selected>P</option>
+          <option value="ausente">A</option>
+          <option value="tarde">T</option>
         </select>`;
-    }
-
-    lista_alumnos.innerHTML += `
-      <div data-id="${a.id}">
-        <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
-        <div class="selector-hora">
-          ${selectoresHtml}
-        </div>
-      </div>`;
-  });
-  guardar.disabled = false;
-}
-
-fecha.onchange = () => { profesor.disabled = !fecha.value; };
-profesor.onchange = () => { if (profesor.value) cargarMaterias(profesor.value); };
-materia.onchange = () => { if (materia.value) cargarCursos(profesor.value, materia.value); };
-curso.onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
-
-// Lógica de Guardado con reemplazo
-guardar.onclick = () => ejecutarGuardado(false);
-
-async function ejecutarGuardado(forzar = false) {
-  // --- ESCUDO DE VALIDACIÓN ---
-  if (!fecha.value || !profesor.value || !materia.value || !curso.value) {
-    mensaje.style.color = "red";
-    mensaje.textContent = "❌ Por favor, completa todos los campos superiores antes de guardar.";
-    return;
-  }
-  // -----------------------------
-
-  guardar.disabled = true;
-  guardar.textContent = "🚀 Procesando...";
-  mensaje.innerHTML = "";
-  
-  // ... resto del código ...
-  
-  const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
-  const registros = [];
-
-  filas.forEach(f => {
-    const datoAlumno = {
-      fecha: fecha.value,
-      profesor_id: profesor.value,
-      materia_id: materia.value,
-      curso_id: curso.value,
-      alumno_id: f.dataset.id,
-      hora1: f.querySelector(".h1").value,
-      hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null // Si no existe H2, manda null
-    };
-    registros.push(datoAlumno);
-  });
-
-  // Si forzar es true, usa upsert para reemplazar
-  const query = forzar 
-    ? supabaseClient.from("asistencia").upsert(registros, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' })
-    : supabaseClient.from("asistencia").insert(registros);
-
-  const { error } = await query;
-
-  if (error) {
-    if (error.code === "23505") {
-      // Error de duplicado
-      mostrarPreguntaSobrescribir();
-    } else {
-      mensaje.style.color = "red";
-      mensaje.textContent = "❌ Error: " + error.message;
-      guardar.disabled = false;
-      guardar.textContent = "Guardar asistencia";
-    }
-    return;
-  }
-
-  mensaje.style.color = "green";
-  mensaje.innerHTML = "<b>✅ ¡Asistencia guardada con éxito!</b>";
-  setTimeout(() => { resetFormulario(); }, 2000);
-}
-
-function mostrarPreguntaSobrescribir() {
-  mensaje.style.color = "#d35400";
-  mensaje.innerHTML = `
-    <p>⚠️ Ya has cargado la asistencia para este curso pero ahora tiene cambios.<br>¿Quieres reemplazar la carga anterior por esta nueva?</p>
-    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
-      <button id="btn-continuar" class="btn-alerta btn-reemplazar">Continuar Guardando</button>
-      <button id="btn-salir" class="btn-alerta btn-salir">SALIR</button>
-    </div>
-  `;
-
-  document.getElementById("cant-horas").onchange = () => { if (curso.value) cargarAlumnos(curso.value); };
-  document.getElementById("btn-continuar").onclick = () => ejecutarGuardado(true);
-  document.getElementById("btn-salir").onclick = () => resetFormulario();
-  
-  guardar.disabled = false;
-  guardar.textContent = "Guardar asistencia";
-}
-
-resetFormulario();
-</script>
-</body>
-</html>
