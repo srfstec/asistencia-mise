@@ -115,7 +115,7 @@ async function dibujarAlumnos() {
 curso.onchange = dibujarAlumnos;
 horas.onchange = dibujarAlumnos;
 
-// --- LÓGICA DE GUARDADO FINAL ---
+// --- LÓGICA DE GUARDADO CON FILTRO POR HORAS ---
 btnG.onclick = () => enviar('normal');
 
 async function enviar(modo) {
@@ -125,6 +125,7 @@ async function enviar(modo) {
   btnG.textContent = "Procesando...";
   mensaje.innerHTML = "";
 
+  const cantHorasActual = horas.value; // Guardamos si el profesor eligió 1 o 2 horas
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
   const regs = Array.from(filas).map(f => ({
     fecha: fecha.value, 
@@ -136,25 +137,34 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  // A. VERIFICAR SI YA EXISTE CARGA (Solo la primera vez que se toca el botón)
+  // A. VERIFICAR SI YA EXISTE CARGA PARA ESA CANTIDAD DE HORAS ESPECÍFICA
   if (modo === 'normal') {
-    const { data: existentes } = await supabaseClient
+    let queryVerificar = supabaseClient
       .from("asistencia")
       .select("id")
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
       .eq("materia_id", materia.value)
-      .eq("curso_id", curso.value)
-      .limit(1);
+      .eq("curso_id", curso.value);
+
+    // Si el profesor quiere cargar 1 hora, verificamos si ya existen registros donde hora2 sea NULL
+    // Si quiere cargar 2 horas, verificamos si ya existen registros donde hora2 NO sea NULL
+    if (cantHorasActual === "1") {
+        queryVerificar = queryVerificar.is("hora2", null);
+    } else {
+        queryVerificar = queryVerificar.not("hora2", "is", null);
+    }
+
+    const { data: existentes } = await queryVerificar.limit(1);
 
     if (existentes && existentes.length > 0) {
       mensaje.innerHTML = `
         <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya hay datos guardados para esta clase hoy.</p>
+          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya hay una carga de <b>${cantHorasActual} hora(s)</b> guardada hoy.</p>
           <p>¿Qué deseas hacer?</p>
           <div style="display:flex; flex-direction:column; gap:8px;">
-            <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA (Sumar)</button>
-            <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR (Reemplazar)</button>
+            <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA (Sumar otra)</button>
+            <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR (Reemplazar la de ${cantHorasActual}h)</button>
             <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
           </div>
         </div>`;
@@ -168,8 +178,8 @@ async function enviar(modo) {
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
       <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
-        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro? Se borrará la carga anterior de esta clase.</p>
-        <button class="btn-alerta" style="background:#c0392b" id="btn-confirmar-final">SÍ, BORRAR Y REEMPLAZAR</button>
+        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro? Se borrará solo la carga anterior de ${cantHorasActual} hora(s).</p>
+        <button class="btn-alerta" style="background:#c0392b" id="btn-confirmar-final">SÍ, REEMPLAZAR</button>
         <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
       </div>`;
     document.getElementById("btn-confirmar-final").onclick = () => enviar('confirmar-sobrescribir');
@@ -177,16 +187,24 @@ async function enviar(modo) {
   }
 
   // C. EJECUCIÓN DEL GUARDADO
-  // Si eligió sobrescribir, primero hacemos el DELETE manual
   if (modo === 'confirmar-sobrescribir') {
-    await supabaseClient.from("asistencia").delete()
+    // Borramos SOLO los registros que coincidan con la cantidad de horas actual
+    let queryBorrar = supabaseClient.from("asistencia").delete()
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
       .eq("materia_id", materia.value)
       .eq("curso_id", curso.value);
+
+    if (cantHorasActual === "1") {
+        queryBorrar = queryBorrar.is("hora2", null);
+    } else {
+        queryBorrar = queryBorrar.not("hora2", "is", null);
+    }
+    
+    await queryBorrar;
   }
 
-  // Ahora insertamos (sirve para 'normal', 'nueva' y el paso final de 'sobrescribir')
+  // Ahora insertamos (sirve para todo modo)
   const { error } = await supabaseClient.from("asistencia").insert(regs);
 
   if (error) {
@@ -201,4 +219,5 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
 
