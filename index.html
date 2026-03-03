@@ -1,11 +1,63 @@
-<script>
-/* Author: Santiago Franco
-   Version: 1.0
-   Description: Core Logic for Mise SEC Attendance System
-   Unauthorized copying of this file is strictly prohibited.
+/* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. 
+   SISTEMA EXCLUSIVO PARA MISE SEC. 
+   Version: 1.0.5
 */
 
-const supabaseClient = ... // Tu código sigue igual aquí
+// --- BLOQUEO DE PROTECCIÓN DE INTERFAZ ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+document.onkeydown = function(e) {
+  if(e.keyCode == 123) return false; 
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+  if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+}
+
+// --- CONFIGURACIÓN CLIENTE ---
+const supabaseClient = supabase.createClient("https://TU_URL.supabase.co", "TU_API_KEY");
+
+// --- LÓGICA DE LOGIN (Nombre + Clave) ---
+const btnEntrar = document.getElementById("btn-entrar");
+const loginUser = document.getElementById("login-user"); // Cambiado de login-email
+const loginPass = document.getElementById("login-pass");
+const loginContainer = document.getElementById("login-container");
+const appContent = document.getElementById("app-content");
+const loginError = document.getElementById("login-error");
+
+btnEntrar.onclick = async () => {
+    const user = loginUser.value.trim().toLowerCase();
+    const pass = loginPass.value;
+
+    if (!user || !pass) {
+        loginError.textContent = "❌ Completa todos los campos";
+        return;
+    }
+
+    btnEntrar.disabled = true;
+    btnEntrar.textContent = "Verificando...";
+    
+    // Transformamos el nombre en el correo interno para Supabase
+    const emailSimulado = `${user}@mise.com`;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: emailSimulado,
+        password: pass,
+    });
+
+    if (error) {
+        loginError.textContent = "❌ Usuario o clave incorrectos";
+        btnEntrar.disabled = false;
+        btnEntrar.textContent = "Entrar al Sistema";
+    } else {
+        // LOGIN EXITOSO
+        loginContainer.style.display = "none";
+        appContent.style.display = "block";
+        console.log("Sesión iniciada correctamente");
+    }
+};
+
+// --- EL RESTO DE TU LÓGICA (enviar, comparar, etc.) SIGUE AQUÍ ---
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -38,8 +90,20 @@ const supabaseClient = ... // Tu código sigue igual aquí
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header-container"><h2>Asistencia</h2><img src="Logo Mise 2025.png" class="logo"></div>
+<div id="login-container" class="container">
+  <div class="header-container">
+    <h2>Acceso Profesores</h2>
+    <img src="Logo Mise 2025.png" class="logo">
+  </div>
+  <label>📧 Correo Electrónico:</label>
+  <input type="email" id="login-email" placeholder="ejemplo@mise.com">
+  <label>🔑 Contraseña:</label>
+  <input type="password" id="login-pass">
+  <button id="btn-entrar" style="width: 100%; background: var(--secondary); color: white; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entrar al Sistema</button>
+  <div id="login-error" style="color: red; text-align: center; margin-top: 10px;"></div>
+</div>
+
+<div id="app-content" class="container" style="display: none;">
 
   <label>📅 Fecha:</label>
   <input type="date" id="fecha">
@@ -246,7 +310,3 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
-
-
-
-
