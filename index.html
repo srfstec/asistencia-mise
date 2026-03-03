@@ -94,26 +94,46 @@ const btnEntrar = document.getElementById("btn-entrar"), loginUser = document.ge
 
 // --- LÓGICA DE LOGIN ---
 btnEntrar.onclick = async () => {
-    const user = loginUser.value.trim().toLowerCase();
-    const pass = loginPass.value;
-    if (!user || !pass) { loginError.textContent = "❌ Completa los campos"; return; }
+    const user = loginUser.value.trim().toLowerCase(); // Limpia espacios y pasa a minúsculas
+    const pass = loginPass.value.trim(); // Limpia espacios en la clave
+
+    if (!user || !pass) {
+        loginError.textContent = "❌ Completa todos los campos";
+        return;
+    }
 
     btnEntrar.disabled = true;
     btnEntrar.textContent = "Verificando...";
-    const emailSimulado = `${user}@mise.com`;
+    
+    // IMPORTANTE: Asegúrate que en Supabase el mail sea EXACTAMENTE este:
+    const emailSimulado = `${user}@mise.com`; 
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: emailSimulado, password: pass });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: emailSimulado,
+        password: pass,
+    });
 
     if (error) {
-        loginError.textContent = "❌ Usuario o clave incorrectos";
+        console.log("Error de Supabase:", error.message); // Mira esto en la consola (F12)
+        loginError.textContent = "❌ " + error.message; // Esto nos dirá el error real en pantalla
         btnEntrar.disabled = false;
         btnEntrar.textContent = "Entrar al Sistema";
     } else {
         loginContainer.style.display = "none";
         appContent.style.display = "block";
-        // Al loguear, ya podemos disparar la carga de profesores basada en la fecha de hoy
-        fecha.valueAsDate = new Date();
-        fecha.onchange();
+        
+        // Auto-selección de profesor
+        const selectorProfe = document.getElementById("profesor");
+        const nombreLogueado = user; 
+
+        for (let i = 0; i < selectorProfe.options.length; i++) {
+            if (selectorProfe.options[i].text.toLowerCase() === nombreLogueado) {
+                selectorProfe.selectedIndex = i;
+                selectorProfe.disabled = true;
+                selectorProfe.dispatchEvent(new Event('change'));
+                break;
+            }
+        }
     }
 };
 
@@ -206,5 +226,6 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
 
 
