@@ -14,13 +14,11 @@
     label { font-weight: 600; display: block; margin-bottom: 5px; color: #333; }
     select, input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #999; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
     
-    /* LISTA ALUMNOS */
     #lista-alumnos div[data-id] { background: #fff; border-left: 5px solid var(--secondary); padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
     .alumno-nombre { font-size: 1em; font-weight: 600; flex: 1; color: var(--primary); }
     .selector-hora { display: flex; align-items: center; gap: 8px; }
     .selector-hora select { width: auto; font-size: 12px; margin: 0; padding: 5px; }
     
-    /* COLORES */
     .estado-ausente { background-color: #ffcccc !important; color: #900 !important; }
     .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; }
     .estado-presente { background-color: #e6ffcc !important; color: #060 !important; }
@@ -28,7 +26,7 @@
     #guardar { width: 100%; background: var(--success); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     #guardar:disabled { background: #7f8c8d; }
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
-    .btn-alerta { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; }
+    .btn-alerta { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; width: 100%; }
   </style>
 </head>
 <body>
@@ -69,7 +67,6 @@ function actualizarColor(el) {
   if (el.value) el.classList.add('estado-' + el.value);
 }
 
-// 1. Al cambiar fecha habilitar profesor
 fecha.onchange = async () => {
   if (!fecha.value) return;
   const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
@@ -78,7 +75,6 @@ fecha.onchange = async () => {
   profesor.disabled = false;
 };
 
-// 2. Al cambiar profesor habilitar materia
 profesor.onchange = async () => {
   const { data } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
   const ids = data.map(r => r.materia_id);
@@ -88,7 +84,6 @@ profesor.onchange = async () => {
   mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
 };
 
-// 3. Al cambiar materia habilitar Horas y Curso
 materia.onchange = async () => {
   horas.disabled = false;
   const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
@@ -99,7 +94,6 @@ materia.onchange = async () => {
   curs.forEach(c => curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`);
 };
 
-// 4. Dibujar alumnos (se dispara con Curso o con Cambio de Horas)
 async function dibujarAlumnos() {
   if (!curso.value) return;
   lista.innerHTML = "Cargando...";
@@ -121,27 +115,87 @@ async function dibujarAlumnos() {
 curso.onchange = dibujarAlumnos;
 horas.onchange = dibujarAlumnos;
 
-// 5. Guardar
-btnG.onclick = () => enviar(false);
+// --- NUEVA LÓGICA DE GUARDADO ---
+btnG.onclick = () => enviar('normal');
 
-async function enviar(forzar) {
+async function enviar(modo) {
+  if (!fecha.value || !curso.value) return alert("Faltan datos");
   btnG.disabled = true;
+  btnG.textContent = "Procesando...";
+  mensaje.innerHTML = "";
+
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
   const regs = Array.from(filas).map(f => ({
-    fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
-    alumno_id: f.dataset.id, hora1: f.querySelector(".h1").value,
+    fecha: fecha.value, 
+    profesor_id: profesor.value, 
+    materia_id: materia.value, 
+    curso_id: curso.value,
+    alumno_id: f.dataset.id, 
+    hora1: f.querySelector(".h1").value,
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  const { error } = await supabaseClient.from("asistencia")[forzar ? 'upsert' : 'insert'](regs, forzar ? { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' } : {});
+  // PASO 1: VERIFICAR SI YA EXISTE CARGA
+  if (modo === 'normal') {
+    const { data: existentes } = await supabaseClient
+      .from("asistencia")
+      .select("hora2")
+      .eq("fecha", fecha.value)
+      .eq("profesor_id", profesor.value)
+      .eq("materia_id", materia.value)
+      .eq("curso_id", curso.value)
+      .limit(1);
 
-  if (error && error.code === "23505") {
-    mensaje.innerHTML = `⚠️ Ya existe carga. <button class="btn-alerta" style="background:green" onclick="enviar(true)">REEMPLAZAR</button> <button class="btn-alerta" style="background:red" onclick="location.reload()">SALIR</button>`;
-  } else {
-    mensaje.innerHTML = error ? "❌ Error" : "✅ Guardado correctamente";
-    if (!error) setTimeout(() => location.reload(), 2000);
+    if (existentes && existentes.length > 0) {
+      const yaCargoDos = existentes[0].hora2 !== null;
+      const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
+      mensaje.innerHTML = `
+        <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
+          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
+          <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
+          <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
+          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR ANTERIOR</button>
+          <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
+        </div>`;
+      btnG.disabled = false;
+      btnG.textContent = "Guardar asistencia";
+      return;
+    }
   }
-  btnG.disabled = false;
+
+  // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
+  if (modo === 'pre-sobrescribir') {
+    mensaje.innerHTML = `
+      <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
+        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro que deseas sobrescribir el registro anterior?</p>
+        <button class="btn-alerta" style="background:#c0392b" id="btn-f">SÍ, SOBRESCRIBIR</button>
+        <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
+      </div>`;
+    document.getElementById("btn-f").onclick = () => {
+        document.getElementById("btn-f").disabled = true;
+        enviar('confirmar-sobrescribir');
+    };
+    return;
+  }
+
+  // PASO 3: GUARDADO REAL
+  let q;
+  if (modo === 'confirmar-sobrescribir') {
+    q = supabaseClient.from("asistencia").upsert(regs, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' });
+  } else {
+    q = supabaseClient.from("asistencia").insert(regs);
+  }
+
+  const { error } = await q;
+
+  if (error) {
+    mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`;
+    btnG.disabled = false;
+    btnG.textContent = "Guardar asistencia";
+  } else {
+    mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`;
+    setTimeout(() => location.reload(), 2000);
+  }
 }
 </script>
 </body>
