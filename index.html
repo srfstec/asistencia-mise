@@ -115,11 +115,12 @@ async function dibujarAlumnos() {
 curso.onchange = dibujarAlumnos;
 horas.onchange = dibujarAlumnos;
 
-// --- NUEVA LÓGICA DE GUARDADO ---
+// --- LÓGICA DE GUARDADO FINAL ---
 btnG.onclick = () => enviar('normal');
 
 async function enviar(modo) {
   if (!fecha.value || !curso.value) return alert("Faltan datos");
+  
   btnG.disabled = true;
   btnG.textContent = "Procesando...";
   mensaje.innerHTML = "";
@@ -135,11 +136,11 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  // PASO 1: VERIFICAR SI YA EXISTE CARGA
+  // A. VERIFICAR SI YA EXISTE CARGA (Solo la primera vez que se toca el botón)
   if (modo === 'normal') {
     const { data: existentes } = await supabaseClient
       .from("asistencia")
-      .select("hora2")
+      .select("id")
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
       .eq("materia_id", materia.value)
@@ -147,15 +148,15 @@ async function enviar(modo) {
       .limit(1);
 
     if (existentes && existentes.length > 0) {
-      const yaCargoDos = existentes[0].hora2 !== null;
-      const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
       mensaje.innerHTML = `
         <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
-          <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
-          <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
-          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR ANTERIOR</button>
-          <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
+          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya hay datos guardados para esta clase hoy.</p>
+          <p>¿Qué deseas hacer?</p>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA (Sumar)</button>
+            <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR (Reemplazar)</button>
+            <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
+          </div>
         </div>`;
       btnG.disabled = false;
       btnG.textContent = "Guardar asistencia";
@@ -163,30 +164,30 @@ async function enviar(modo) {
     }
   }
 
-  // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
+  // B. CONFIRMACIÓN PARA SOBRESCRIBIR
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
       <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
-        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro que deseas sobrescribir el registro anterior?</p>
-        <button class="btn-alerta" style="background:#c0392b" id="btn-f">SÍ, SOBRESCRIBIR</button>
+        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro? Se borrará la carga anterior de esta clase.</p>
+        <button class="btn-alerta" style="background:#c0392b" id="btn-confirmar-final">SÍ, BORRAR Y REEMPLAZAR</button>
         <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
       </div>`;
-    document.getElementById("btn-f").onclick = () => {
-        document.getElementById("btn-f").disabled = true;
-        enviar('confirmar-sobrescribir');
-    };
+    document.getElementById("btn-confirmar-final").onclick = () => enviar('confirmar-sobrescribir');
     return;
   }
 
-  // PASO 3: GUARDADO REAL
-  let q;
+  // C. EJECUCIÓN DEL GUARDADO
+  // Si eligió sobrescribir, primero hacemos el DELETE manual
   if (modo === 'confirmar-sobrescribir') {
-    q = supabaseClient.from("asistencia").upsert(regs, { onConflict: 'fecha,profesor_id,materia_id,curso_id,alumno_id' });
-  } else {
-    q = supabaseClient.from("asistencia").insert(regs);
+    await supabaseClient.from("asistencia").delete()
+      .eq("fecha", fecha.value)
+      .eq("profesor_id", profesor.value)
+      .eq("materia_id", materia.value)
+      .eq("curso_id", curso.value);
   }
 
-  const { error } = await q;
+  // Ahora insertamos (sirve para 'normal', 'nueva' y el paso final de 'sobrescribir')
+  const { error } = await supabaseClient.from("asistencia").insert(regs);
 
   if (error) {
     mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`;
@@ -200,3 +201,4 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
