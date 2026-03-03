@@ -115,7 +115,7 @@ async function dibujarAlumnos() {
 curso.onchange = dibujarAlumnos;
 horas.onchange = dibujarAlumnos;
 
-// --- LÓGICA DE GUARDADO CON FILTRO POR HORAS ---
+// --- LÓGICA DE GUARDADO CON DETECCIÓN DE CAMBIOS ---
 btnG.onclick = () => enviar('normal');
 
 async function enviar(modo) {
@@ -125,7 +125,7 @@ async function enviar(modo) {
   btnG.textContent = "Procesando...";
   mensaje.innerHTML = "";
 
-  const cantHorasActual = horas.value; // Guardamos si el profesor eligió 1 o 2 horas
+  const cantHorasActual = horas.value;
   const filas = document.querySelectorAll("#lista-alumnos div[data-id]");
   const regs = Array.from(filas).map(f => ({
     fecha: fecha.value, 
@@ -137,34 +137,53 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  // A. VERIFICAR SI YA EXISTE CARGA PARA ESA CANTIDAD DE HORAS ESPECÍFICA
+  // A. VERIFICACIÓN DE CARGA PREVIA Y CAMBIOS
   if (modo === 'normal') {
     let queryVerificar = supabaseClient
       .from("asistencia")
-      .select("id")
+      .select("alumno_id, hora1, hora2")
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
       .eq("materia_id", materia.value)
       .eq("curso_id", curso.value);
 
-    // Si el profesor quiere cargar 1 hora, verificamos si ya existen registros donde hora2 sea NULL
-    // Si quiere cargar 2 horas, verificamos si ya existen registros donde hora2 NO sea NULL
     if (cantHorasActual === "1") {
         queryVerificar = queryVerificar.is("hora2", null);
     } else {
         queryVerificar = queryVerificar.not("hora2", "is", null);
     }
 
-    const { data: existentes } = await queryVerificar.limit(1);
+    const { data: existentes } = await queryVerificar;
 
     if (existentes && existentes.length > 0) {
+      // COMPARAR SI HAY CAMBIOS
+      let hayCambios = false;
+      if (existentes.length !== regs.length) {
+          hayCambios = true;
+      } else {
+          // Buscamos si algún alumno tiene un estado diferente al guardado
+          regs.forEach(r => {
+              const guardado = existentes.find(ex => ex.alumno_id == r.alumno_id);
+              if (guardado) {
+                  if (guardado.hora1 !== r.hora1 || guardado.hora2 !== r.hora2) {
+                      hayCambios = true;
+                  }
+              }
+          });
+      }
+
+      // Si hay cambios, mostramos el mensaje que pediste
+      const alertaTitulo = hayCambios 
+        ? `⚠️ Ya has cargado la asistencia para este curso y ${cantHorasActual}hs pero ahora tiene cambios.`
+        : `⚠️ Ya hay una carga de ${cantHorasActual} hora(s) guardada hoy exactamente igual.`;
+
       mensaje.innerHTML = `
         <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;">⚠️ <b>Atención:</b> Ya hay una carga de <b>${cantHorasActual} hora(s)</b> guardada hoy.</p>
-          <p>¿Qué deseas hacer?</p>
+          <p style="color:#d35400; margin:0 0 10px 0;"><b>${alertaTitulo}</b></p>
+          <p>¿Quieres reemplazar la carga anterior por esta nueva o realizar una carga adicional?</p>
           <div style="display:flex; flex-direction:column; gap:8px;">
-            <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA (Sumar otra)</button>
-            <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR (Reemplazar la de ${cantHorasActual}h)</button>
+            <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA (Adicional)</button>
+            <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR CARGA ANTERIOR</button>
             <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
           </div>
         </div>`;
@@ -174,21 +193,20 @@ async function enviar(modo) {
     }
   }
 
-  // B. CONFIRMACIÓN PARA SOBRESCRIBIR
+  // B. CONFIRMACIÓN PARA SOBRESCRIBIR (REEMPLAZAR)
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
       <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
-        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro? Se borrará solo la carga anterior de ${cantHorasActual} hora(s).</p>
-        <button class="btn-alerta" style="background:#c0392b" id="btn-confirmar-final">SÍ, REEMPLAZAR</button>
+        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro? Se borrará el registro anterior de ${cantHorasActual}hs y se guardará este.</p>
+        <button class="btn-alerta" style="background:#c0392b" id="btn-reemplazo-f">SÍ, REEMPLAZAR</button>
         <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
       </div>`;
-    document.getElementById("btn-confirmar-final").onclick = () => enviar('confirmar-sobrescribir');
+    document.getElementById("btn-reemplazo-f").onclick = () => enviar('confirmar-sobrescribir');
     return;
   }
 
-  // C. EJECUCIÓN DEL GUARDADO
+  // C. EJECUCIÓN FINAL
   if (modo === 'confirmar-sobrescribir') {
-    // Borramos SOLO los registros que coincidan con la cantidad de horas actual
     let queryBorrar = supabaseClient.from("asistencia").delete()
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
@@ -200,17 +218,14 @@ async function enviar(modo) {
     } else {
         queryBorrar = queryBorrar.not("hora2", "is", null);
     }
-    
     await queryBorrar;
   }
 
-  // Ahora insertamos (sirve para todo modo)
   const { error } = await supabaseClient.from("asistencia").insert(regs);
 
   if (error) {
     mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`;
     btnG.disabled = false;
-    btnG.textContent = "Guardar asistencia";
   } else {
     mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`;
     setTimeout(() => location.reload(), 2000);
