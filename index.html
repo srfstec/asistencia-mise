@@ -1,5 +1,5 @@
 /* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. 
-   SISTEMA EXCLUSIVO PARA MISERICORDIA SECUNDARIA. 
+   SISTEMA EXCLUSIVO PARA MISE SEC. 
    Version: 1.0.5
 */
 
@@ -49,11 +49,29 @@ btnEntrar.onclick = async () => {
         loginError.textContent = "❌ Usuario o clave incorrectos";
         btnEntrar.disabled = false;
         btnEntrar.textContent = "Entrar al Sistema";
-    } else {
+   } else {
         // LOGIN EXITOSO
         loginContainer.style.display = "none";
         appContent.style.display = "block";
-        console.log("Sesión iniciada correctamente");
+        
+        // --- AUTO-SELECCIÓN DE PROFESOR ---
+        const selectorProfe = document.getElementById("profesor"); // Asegúrate que tu <select> tenga este ID
+        const nombreLogueado = loginUser.value.trim();
+
+        // Buscamos si el nombre que escribió el profe existe en la lista desplegable
+        for (let i = 0; i < selectorProfe.options.length; i++) {
+            // Comparamos ignorando mayúsculas/minúsculas
+            if (selectorProfe.options[i].text.toLowerCase() === nombreLogueado.toLowerCase()) {
+                selectorProfe.selectedIndex = i;
+                selectorProfe.disabled = true; // Opcional: Bloqueamos para que no cargue a nombre de otro
+                
+                // Disparamos el evento 'change' manualmente si tienes lógica que dependa de elegir al profe
+                selectorProfe.dispatchEvent(new Event('change'));
+                break;
+            }
+        }
+        
+        console.log("Sesión iniciada y profesor asignado:", nombreLogueado);
     }
 };
 
@@ -310,4 +328,3 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
-
