@@ -100,7 +100,7 @@ btnEntrar.onclick = async () => {
 
     btnEntrar.disabled = true;
     btnEntrar.textContent = "Verificando...";
-    const emailSimulado = `${user}@mise.com`;
+    const emailSimulado = `${user}@asistencia.com`;
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email: emailSimulado, password: pass });
 
@@ -206,3 +206,4 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
