@@ -162,35 +162,49 @@ profesor.onchange = async () => {
   mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
 };
 
+// 1. Cuando cambia la MATERIA, solo habilitamos las HORAS
 materia.onchange = async () => {
+  if (!materia.value) return;
+  
+  // Habilitamos horas y reseteamos curso para que no haya errores
   horas.disabled = false;
-  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
-  const ids = data.map(r => r.curso_id);
-  const { data: curs } = await supabaseClient.from("curso").select("*").in("id", ids).order("nombre");
-  curso.innerHTML = '<option value="">Seleccionar...</option>';
-  curso.disabled = false;
-  curs.forEach(c => curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`);
+  curso.innerHTML = '<option value="">Seleccione cantidad de horas...</option>';
+  curso.disabled = true;
+  lista.innerHTML = ""; // Limpiamos la lista si ya había algo
+  btnG.disabled = true;
 };
 
-async function dibujarAlumnos() {
-  if (!curso.value) return;
-  lista.innerHTML = "Cargando...";
-  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
-  const ids = rel.map(r => r.alumno_id);
-  const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", ids).order("apellido");
-  lista.innerHTML = "";
-  alus.forEach(a => {
-    let hHtml = `<span>H1:</span><select class="h1 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
-    if (horas.value === "2") {
-      hHtml += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
-    }
-    lista.innerHTML += `<div data-id="${a.id}"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><div class="selector-hora">${hHtml}</div></div>`;
-  });
-  btnG.disabled = false;
-}
+// 2. Cuando cambia la CANTIDAD DE HORAS, recién ahí buscamos y habilitamos el CURSO
+horas.onchange = async () => {
+  if (!materia.value || !horas.value) return;
 
+  const { data } = await supabaseClient
+    .from("profesores_materias_curso")
+    .select("curso_id")
+    .eq("profesor_id", profesor.value)
+    .eq("materia_id", materia.value);
+
+  const ids = data.map(r => r.curso_id);
+  const { data: curs } = await supabaseClient
+    .from("curso")
+    .select("*")
+    .in("id", ids)
+    .order("nombre");
+
+  curso.innerHTML = '<option value="">Seleccionar...</option>';
+  curso.disabled = false;
+  curs.forEach(c => {
+    curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`;
+  });
+  
+  // Si el curso ya estaba seleccionado, redibujamos los alumnos
+  if (curso.value) {
+    dibujarAlumnos();
+  }
+};
+
+// 3. Cuando cambia el CURSO, dibujamos los alumnos (esta queda igual)
 curso.onchange = dibujarAlumnos;
-horas.onchange = dibujarAlumnos;
 
 // --- LÓGICA DE GUARDADO COMPLEJA (RECUPERADA) ---
 btnG.onclick = () => enviar('normal');
@@ -283,6 +297,7 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
 
 
 
