@@ -27,7 +27,6 @@
     #guardar { width: 100%; background: var(--success); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     #guardar:disabled { background: #7f8c8d; }
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
-    .btn-alerta { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; width: 100%; }
   </style>
 </head>
 <body>
@@ -46,23 +45,25 @@
 </div>
 
 <div id="app-content" class="container" style="display: none;">
-  <label>📅 Fecha:</label>
-  <input type="date" id="fecha">
+  <form id="asistencia-form">
+    <label>📅 Fecha:</label>
+    <input type="date" id="fecha">
 
-  <label>👤 Profesor:</label>
-  <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
+    <label>👤 Profesor:</label>
+    <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
 
-  <label>📚 Materia:</label>
-  <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
+    <label>📚 Materia:</label>
+    <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
 
-  <label>⏱️ Cantidad de horas:</label>
-  <select id="cant-horas" disabled>
-    <option value="1">1 Hora</option>
-    <option value="2" selected>2 Horas</option>
-  </select>
+    <label>⏱️ Cantidad de horas:</label>
+    <select id="cant-horas" disabled>
+      <option value="1">1 Hora</option>
+      <option value="2" selected>2 Horas</option>
+    </select>
 
-  <label>🏫 Curso:</label>
-  <select id="curso" disabled><option value="">Seleccione materia...</option></select>
+    <label>🏫 Curso:</label>
+    <select id="curso" disabled><option value="">Seleccione materia...</option></select>
+  </form>
 
   <hr>
   <div id="lista-alumnos"></div>
@@ -77,7 +78,6 @@
 <script>
 /* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. */
 
-// --- BLOQUEO DE PROTECCIÓN ---
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.onkeydown = function(e) {
   if(e.keyCode == 123) return false; 
@@ -85,59 +85,28 @@ document.onkeydown = function(e) {
   if(e.ctrlKey && e.keyCode == 85) return false;
 }
 
-// --- CONFIGURACIÓN CLIENTE ---
 const supabaseClient = supabase.createClient("https://htdmgshocecsuiykwwmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ");
 
-// --- ELEMENTOS ---
 const fecha = document.getElementById("fecha"), profesor = document.getElementById("profesor"), materia = document.getElementById("materia"), horas = document.getElementById("cant-horas"), curso = document.getElementById("curso"), lista = document.getElementById("lista-alumnos"), btnG = document.getElementById("guardar"), mensaje = document.getElementById("mensaje");
 const btnEntrar = document.getElementById("btn-entrar"), loginUser = document.getElementById("login-user"), loginPass = document.getElementById("login-pass"), loginContainer = document.getElementById("login-container"), appContent = document.getElementById("app-content"), loginError = document.getElementById("login-error");
 
-// --- LÓGICA DE LOGIN ---
 btnEntrar.onclick = async () => {
-    const user = loginUser.value.trim().toLowerCase(); // Limpia espacios y pasa a minúsculas
-    const pass = loginPass.value.trim(); // Limpia espacios en la clave
-
-    if (!user || !pass) {
-        loginError.textContent = "❌ Completa todos los campos";
-        return;
-    }
-
+    const user = loginUser.value.trim().toLowerCase();
+    const pass = loginPass.value.trim();
+    if (!user || !pass) { loginError.textContent = "❌ Completa todos los campos"; return; }
     btnEntrar.disabled = true;
     btnEntrar.textContent = "Verificando...";
-    
-    // IMPORTANTE: Asegúrate que en Supabase el mail sea EXACTAMENTE este:
-    const emailSimulado = `${user}@mise.com`; 
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: emailSimulado,
-        password: pass,
-    });
-
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: `${user}@mise.com`, password: pass });
     if (error) {
-        console.log("Error de Supabase:", error.message); // Mira esto en la consola (F12)
-        loginError.textContent = "❌ " + error.message; // Esto nos dirá el error real en pantalla
+        loginError.textContent = "❌ " + error.message;
         btnEntrar.disabled = false;
         btnEntrar.textContent = "Entrar al Sistema";
     } else {
         loginContainer.style.display = "none";
         appContent.style.display = "block";
-        
-        // Auto-selección de profesor
-        const selectorProfe = document.getElementById("profesor");
-        const nombreLogueado = user; 
-
-        for (let i = 0; i < selectorProfe.options.length; i++) {
-            if (selectorProfe.options[i].text.toLowerCase() === nombreLogueado) {
-                selectorProfe.selectedIndex = i;
-                selectorProfe.disabled = true;
-                selectorProfe.dispatchEvent(new Event('change'));
-                break;
-            }
-        }
     }
 };
 
-// --- LÓGICA DE LA APP ---
 function actualizarColor(el) {
   el.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente');
   if (el.value) el.classList.add('estado-' + el.value);
@@ -145,41 +114,22 @@ function actualizarColor(el) {
 
 fecha.onchange = async () => {
     if (!fecha.value) return;
-    
-    // 1. Cargamos la lista de profesores de la base de datos
     const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
-    
     profesor.innerHTML = '<option value="">Seleccionar...</option>';
-    data.forEach(p => {
-        profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
-    });
-
-    // 2. AUTO-SELECCIÓN: Usamos el nombre con el que se logueó
+    data.forEach(p => { profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`; });
     const nombreLogueado = loginUser.value.trim().toLowerCase();
-    
-    let encontrado = false;
     for (let i = 0; i < profesor.options.length; i++) {
         if (profesor.options[i].text.toLowerCase() === nombreLogueado) {
             profesor.selectedIndex = i;
-            
-            // --- AQUÍ ESTÁ EL BLOQUEO ---
-            profesor.disabled = true; // Bloqueamos el desplegable para que no lo cambien
-            
-            // Disparamos manualmente el evento para que cargue las materias de ese profesor
+            profesor.disabled = true;
             profesor.onchange(); 
-            encontrado = true;
             break;
         }
-    }
-
-    if (!encontrado) {
-        // Si por alguna razón el nombre del login no está en la tabla de profesores
-        profesor.disabled = false; 
-        console.warn("El usuario logueado no coincide con ningún profesor de la lista.");
     }
 };
 
 profesor.onchange = async () => {
+  if(!profesor.value) return;
   const { data } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
   const ids = data.map(r => r.materia_id);
   const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids).order("nombre");
@@ -204,13 +154,10 @@ async function dibujarAlumnos() {
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
   const ids = rel.map(r => r.alumno_id);
   const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", ids).order("apellido");
-  
   lista.innerHTML = "";
   alus.forEach(a => {
     let hHtml = `<span>H1:</span><select class="h1 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
-    if (horas.value === "2") {
-      hHtml += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
-    }
+    if (horas.value === "2") { hHtml += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`; }
     lista.innerHTML += `<div data-id="${a.id}"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><div class="selector-hora">${hHtml}</div></div>`;
   });
   btnG.disabled = false;
@@ -231,20 +178,51 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  if (modo === 'confirmar-sobrescribir') {
-    let qB = supabaseClient.from("asistencia").delete().eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
-    horas.value === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null);
-    await qB;
-  }
-
   const { error } = await supabaseClient.from("asistencia").insert(regs);
-  if (error) { mensaje.innerHTML = `<p style="color:red">Error: ${error.message}</p>`; btnG.disabled = false; }
-  else { mensaje.innerHTML = `<p style="color:green">✅ ¡Guardado!</p>`; setTimeout(() => location.reload(), 2000); }
+  
+  if (error) {
+    mensaje.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+    btnG.disabled = false;
+    btnG.textContent = "Guardar asistencia";
+  } else {
+    // --- LÓGICA DE LIMPIEZA SIN RECARGAR ---
+    alert("¡Asistencia guardada correctamente!");
+    
+    // 1. Guardamos el nombre del profesor antes de borrar todo
+    const userLogueado = loginUser.value.trim().toLowerCase();
+
+    // 2. Limpiamos el formulario (borra fecha, materia, curso)
+    document.getElementById("asistencia-form").reset(); 
+
+    // 3. Limpiamos visualmente lo que no es del formulario
+    lista.innerHTML = "";
+    mensaje.innerHTML = "";
+    
+    // 4. Reseteamos los selectores a su estado inicial
+    materia.innerHTML = '<option value="">Seleccione profesor...</option>';
+    materia.disabled = true;
+    curso.innerHTML = '<option value="">Seleccione materia...</option>';
+    curso.disabled = true;
+    horas.disabled = true;
+    btnG.disabled = true;
+    btnG.textContent = "Guardar asistencia";
+
+    // 5. MANTENEMOS AL PROFESOR FIJO (Buscamos de nuevo para que no quede vacío)
+    const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
+    profesor.innerHTML = '<option value="">Seleccionar...</option>';
+    data.forEach(p => { profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`; });
+    
+    for (let i = 0; i < profesor.options.length; i++) {
+      if (profesor.options[i].text.toLowerCase() === userLogueado) {
+        profesor.selectedIndex = i;
+        profesor.disabled = true;
+        break;
+      }
+    }
+
+    window.scrollTo(0, 0);
+  }
 }
 </script>
 </body>
 </html>
-
-
-
-
