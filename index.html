@@ -265,8 +265,24 @@ async function enviar(modo) {
     }, 2000); 
   }
 }
+  // NUEVA FUNCIÓN PARA LIMPIAR SIN SALIR DEL LOGIN
+function resetFormulario() {
+    fecha.value = "";
+    // No reseteamos el profesor porque está bloqueado con el usuario logueado
+    materia.innerHTML = '<option value="">Seleccione profesor...</option>';
+    materia.disabled = true;
+    curso.innerHTML = '<option value="">Seleccione materia...</option>';
+    curso.disabled = true;
+    horas.disabled = true;
+    lista.innerHTML = "";
+    mensaje.innerHTML = "";
+    btnG.disabled = true;
+    btnG.textContent = "Guardar asistencia";
+    window.scrollTo(0, 0);
+}
 </script>
 </body>
 </html>
+
 
 
