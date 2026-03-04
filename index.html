@@ -8,39 +8,19 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
-    
-    /* CORRECCIÓN DE FONDO: Eliminamos el display flex que limitaba el crecimiento */
-    body { 
-      font-family: 'Segoe UI', sans-serif; 
-      background-color: var(--bg); 
-      margin: 0; 
-      padding: 20px; 
-      min-height: 100vh; /* Asegura que el negro cubra todo el alto */
-    }
-
-    .container { 
-      width: 100%; 
-      max-width: 600px; 
-      background: var(--card); 
-      padding: 25px; 
-      border-radius: 12px; 
-      margin: 0 auto 20px auto; /* Centrado horizontal */
-    }
-
+    body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; min-height: 100vh; }
+    .container { width: 100%; max-width: 600px; background: var(--card); padding: 25px; border-radius: 12px; margin: 0 auto 20px auto; }
     .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--secondary); margin-bottom: 20px; }
     .logo { max-height: 50px; }
     label { font-weight: 600; display: block; margin-bottom: 5px; color: #333; }
     select, input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #999; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    
     #lista-alumnos div[data-id] { background: #fff; border-left: 5px solid var(--secondary); padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
     .alumno-nombre { font-size: 1em; font-weight: 600; flex: 1; color: var(--primary); }
     .selector-hora { display: flex; align-items: center; gap: 8px; }
     .selector-hora select { width: auto; font-size: 12px; margin: 0; padding: 5px; }
-    
     .estado-ausente { background-color: #ffcccc !important; color: #900 !important; }
     .estado-tarde { background-color: #AAC2E3 !important; color: #0848A3 !important; }
     .estado-presente { background-color: #e6ffcc !important; color: #060 !important; }
-    
     #guardar { width: 100%; background: var(--success); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     #guardar:disabled { background: #7f8c8d; }
     #mensaje { margin-top: 15px; text-align: center; font-weight: bold; }
@@ -50,10 +30,7 @@
 <body>
 
 <div id="login-container" class="container">
-  <div class="header-container">
-    <h2>Acceso Profesores</h2>
-    <img src="Logo Mise 2025.png" class="logo">
-  </div>
+  <div class="header-container"><h2>Acceso Profesores</h2><img src="Logo Mise 2025.png" class="logo"></div>
   <label>👤 Nombre de Usuario:</label>
   <input type="text" id="login-user" placeholder="Tu nombre">
   <label>🔑 Contraseña:</label>
@@ -65,30 +42,24 @@
 <div id="app-content" style="display: none;">
   <div class="container">
     <div class="header-container"><h2>Asistencia</h2><img src="Logo Mise 2025.png" class="logo"></div>
-
     <label>📅 Fecha:</label>
     <input type="date" id="fecha">
-
     <label>👤 Profesor:</label>
     <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
-
     <label>📚 Materia:</label>
     <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
-
     <label>⏱️ Cantidad de horas:</label>
     <select id="cant-horas" disabled>
+      <option value="" selected disabled>Seleccionar horas...</option>
       <option value="1">1 Hora</option>
-      <option value="2" selected>2 Horas</option>
+      <option value="2">2 Horas</option>
     </select>
-
     <label>🏫 Curso:</label>
     <select id="curso" disabled><option value="">Seleccione materia...</option></select>
-
     <hr>
     <div id="lista-alumnos"></div>
     <div id="mensaje"></div>
     <button id="guardar" disabled>Guardar asistencia</button>
-
     <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 13px; color: #2c3e50;">
       Creador <b>Santiago Franco</b> © 2026
     </div>
@@ -96,22 +67,11 @@
 </div>
 
 <script>
-/* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. */
-
-// --- BLOQUEOS ---
-document.addEventListener('contextmenu', event => event.preventDefault());
-document.onkeydown = function(e) {
-  if(e.keyCode == 123) return false; 
-  if(e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) return false;
-  if(e.ctrlKey && e.keyCode == 85) return false;
-}
-
 const supabaseClient = supabase.createClient("https://htdmgshocecsuiykwwmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZG1nc2hvY2Vjc3VpeWt3d210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjcxMjQsImV4cCI6MjA4NjI0MzEyNH0.HrIEsg7Pi2a7bha7-jCLB3tuZKJLzx9M9YHiDJw4usQ");
 
 const fecha = document.getElementById("fecha"), profesor = document.getElementById("profesor"), materia = document.getElementById("materia"), horas = document.getElementById("cant-horas"), curso = document.getElementById("curso"), lista = document.getElementById("lista-alumnos"), btnG = document.getElementById("guardar"), mensaje = document.getElementById("mensaje");
 const btnEntrar = document.getElementById("btn-entrar"), loginUser = document.getElementById("login-user"), loginPass = document.getElementById("login-pass"), loginContainer = document.getElementById("login-container"), appContent = document.getElementById("app-content"), loginError = document.getElementById("login-error");
 
-// --- LÓGICA LOGIN ---
 btnEntrar.onclick = async () => {
     const user = loginUser.value.trim().toLowerCase();
     const pass = loginPass.value.trim();
@@ -139,79 +99,68 @@ fecha.onchange = async () => {
   const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
   profesor.innerHTML = '<option value="">Seleccionar...</option>';
   data.forEach(p => profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`);
-  
-  // Auto-selección y bloqueo por Login
   const nombreLogueado = loginUser.value.trim().toLowerCase();
   for (let i = 0; i < profesor.options.length; i++) {
     if (profesor.options[i].text.toLowerCase() === nombreLogueado) {
         profesor.selectedIndex = i;
         profesor.disabled = true;
-        profesor.onchange(); 
+        
+        // Cargar materias del profesor logueado
+        const { data: dm } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
+        const ids = dm.map(r => r.materia_id);
+        const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids).order("nombre");
+        materia.innerHTML = '<option value="">Seleccionar...</option>';
+        materia.disabled = false;
+        mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
         break;
     }
   }
 };
 
-profesor.onchange = async () => {
-  if(!profesor.value) return;
-  const { data } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profesor.value);
-  const ids = data.map(r => r.materia_id);
-  const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids).order("nombre");
-  materia.innerHTML = '<option value="">Seleccionar...</option>';
-  materia.disabled = false;
-  mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
-};
-
-// 1. Cuando cambia la MATERIA: habilitamos HORAS y reseteamos el resto
 materia.onchange = async () => {
   if (!materia.value) return;
   horas.disabled = false;
-  horas.value = ""; // Obligamos a elegir 1 o 2
+  horas.value = ""; 
   curso.innerHTML = '<option value="">Seleccione cantidad de horas...</option>';
   curso.disabled = true;
   lista.innerHTML = ""; 
   btnG.disabled = true;
 };
 
-// 2. Cuando cambia la CANTIDAD DE HORAS: cargamos y habilitamos el CURSO
 horas.onchange = async () => {
   if (!materia.value || !horas.value) return;
-
-  const { data } = await supabaseClient
-    .from("profesores_materias_curso")
-    .select("curso_id")
-    .eq("profesor_id", profesor.value)
-    .eq("materia_id", materia.value);
-
+  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
   const ids = data.map(r => r.curso_id);
-  const { data: curs } = await supabaseClient
-    .from("curso")
-    .select("*")
-    .in("id", ids)
-    .order("nombre");
-
+  const { data: curs } = await supabaseClient.from("curso").select("*").in("id", ids).order("nombre");
   curso.innerHTML = '<option value="">Seleccionar curso...</option>';
   curso.disabled = false;
-  curs.forEach(c => {
-    curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`;
-  });
-  
-  // Si ya había un curso seleccionado (por error o cambio rápido), limpiamos alumnos
+  curs.forEach(c => { curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`; });
   lista.innerHTML = "";
   btnG.disabled = true;
 };
 
-// 3. ¡IMPORTANTE! Cuando cambia el CURSO: Llamamos a dibujarAlumnos
 curso.onchange = () => {
-  if (curso.value)  {
-    dibujarAlumnos(); // Esta es la función que hace aparecer la lista
-  } else {
-    lista.innerHTML = "";
-    btnG.disabled = true;
-  }
+  if (curso.value) { dibujarAlumnos(); } 
+  else { lista.innerHTML = ""; btnG.disabled = true; }
 };
 
-// --- LÓGICA DE GUARDADO COMPLEJA (RECUPERADA) ---
+async function dibujarAlumnos() {
+  if (!curso.value) return;
+  lista.innerHTML = "Cargando...";
+  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
+  const ids = rel.map(r => r.alumno_id);
+  const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", ids).order("apellido");
+  lista.innerHTML = "";
+  alus.forEach(a => {
+    let hHtml = `<span>H1:</span><select class="h1 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
+    if (horas.value === "2") {
+      hHtml += `<span>H2:</span><select class="h2 estado-presente" onchange="actualizarColor(this)"><option value="presente">P</option><option value="ausente">A</option><option value="tarde">T</option></select>`;
+    }
+    lista.innerHTML += `<div data-id="${a.id}"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><div class="selector-hora">${hHtml}</div></div>`;
+  });
+  btnG.disabled = false;
+}
+
 btnG.onclick = () => enviar('normal');
 
 async function enviar(modo) {
@@ -219,7 +168,6 @@ async function enviar(modo) {
   btnG.disabled = true;
   btnG.textContent = "Procesando...";
   mensaje.innerHTML = "";
-
   const cantHorasActual = horas.value;
   const regs = Array.from(document.querySelectorAll("#lista-alumnos div[data-id]")).map(f => ({
     fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
@@ -228,84 +176,45 @@ async function enviar(modo) {
   }));
 
   if (modo === 'normal') {
-    let queryVerificar = supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
-    cantHorasActual === "1" ? queryVerificar = queryVerificar.is("hora2", null) : queryVerificar = queryVerificar.not("hora2", "is", null);
-    
-    const { data: existentes } = await queryVerificar;
-
+    let qV = supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
+    cantHorasActual === "1" ? qV = qV.is("hora2", null) : qV = qV.not("hora2", "is", null);
+    const { data: existentes } = await qV;
     if (existentes && existentes.length > 0) {
       let hayCambios = false;
-      if (existentes.length !== regs.length) { hayCambios = true; } 
-      else {
-        regs.forEach(r => {
-          const guardado = existentes.find(ex => ex.alumno_id == r.alumno_id);
-          if (guardado && (guardado.hora1 !== r.hora1 || guardado.hora2 !== r.hora2)) hayCambios = true;
-        });
-      }
-
-      const alertaTitulo = hayCambios ? `⚠️ Ya has cargado la asistencia para este curso y ${cantHorasActual}hs pero ahora tiene cambios.`
-        : `⚠️ Ya hay una carga de ${cantHorasActual} hora(s) guardada hoy exactamente igual.`;
-      mensaje.innerHTML = `
-        <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;"><b>${alertaTitulo}</b></p>
-          <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
-          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR ANTERIOR</button>
-          <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
-        </div>`;
-      btnG.disabled = false;
-      btnG.textContent = "Guardar asistencia";
-      return;
+      regs.forEach(r => {
+        const g = existentes.find(ex => ex.alumno_id == r.alumno_id);
+        if (g && (g.hora1 !== r.hora1 || g.hora2 !== r.hora2)) hayCambios = true;
+      });
+      const alertaTitulo = hayCambios ? `⚠️ Ya has cargado la asistencia con cambios.` : `⚠️ Ya hay una carga idéntica hoy.`;
+      mensaje.innerHTML = `<div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;"><p style="color:#d35400;"><b>${alertaTitulo}</b></p><button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button><button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR ANTERIOR</button><button class="btn-alerta" style="background:#e74c3c" onclick="resetFormulario()">CANCELAR</button></div>`;
+      btnG.disabled = false; btnG.textContent = "Guardar asistencia"; return;
     }
   }
 
   if (modo === 'pre-sobrescribir') {
-    mensaje.innerHTML = `
-      <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
-        <p style="color:#c0392b; font-weight:bold;">¿Confirmas reemplazar el registro anterior?</p>
-        <button class="btn-alerta" style="background:#c0392b" id="btn-reemplazo-f">SÍ, REEMPLAZAR</button>
-        <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
-      </div>`;
-    document.getElementById("btn-reemplazo-f").onclick = () => enviar('confirmar-sobrescribir');
-    return;
+    mensaje.innerHTML = `<div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;"><p style="color:#c0392b; font-weight:bold;">¿Confirmas reemplazar?</p><button class="btn-alerta" style="background:#c0392b" id="btn-reemplazo-f">SÍ, REEMPLAZAR</button><button class="btn-alerta" style="background:#7f8c8d" onclick="resetFormulario()">NO, VOLVER</button></div>`;
+    document.getElementById("btn-reemplazo-f").onclick = () => enviar('confirmar-sobrescribir'); return;
   }
 
   if (modo === 'confirmar-sobrescribir') {
     let qB = supabaseClient.from("asistencia").delete().eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
-    cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null);
-    await qB;
+    cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null); await qB;
   }
 
   const { error } = await supabaseClient.from("asistencia").insert(regs);
   if (error) { mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`; btnG.disabled = false; } 
-  else { 
-    mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`; 
-    setTimeout(() => {
-        resetFormulario();
-    }, 2000); 
-  }
+  else { mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`; setTimeout(() => resetFormulario(), 2000); }
 }
-  // NUEVA FUNCIÓN PARA LIMPIAR SIN SALIR DEL LOGIN
+
 function resetFormulario() {
-    fecha.value = "";
-    // No reseteamos el profesor porque está bloqueado con el usuario logueado
-    materia.innerHTML = '<option value="">Seleccione profesor...</option>';
-    materia.disabled = true;
-    curso.innerHTML = '<option value="">Seleccione materia...</option>';
-    curso.disabled = true;
-    horas.disabled = true;
-    lista.innerHTML = "";
-    mensaje.innerHTML = "";
-    btnG.disabled = true;
-    btnG.textContent = "Guardar asistencia";
-    window.scrollTo(0, 0);
+  fecha.value = "";
+  materia.innerHTML = '<option value="">Seleccione profesor...</option>'; materia.disabled = true;
+  curso.innerHTML = '<option value="">Seleccione materia...</option>'; curso.disabled = true;
+  horas.value = ""; horas.disabled = true;
+  lista.innerHTML = ""; mensaje.innerHTML = "";
+  btnG.disabled = true; btnG.textContent = "Guardar asistencia";
+  window.scrollTo(0, 0);
 }
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
