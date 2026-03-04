@@ -190,7 +190,7 @@ async function enviar(modo) {
       const yaCargoDos = existentes[0].hora2 !== null;
       const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
       mensaje.innerHTML = `
-        <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
+       <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
           <p style="color:#d35400; margin:0 0 10px 0;">?? <b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
           <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
           <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
@@ -206,7 +206,7 @@ async function enviar(modo) {
   // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
-      <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
+     <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
         <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro que deseas sobrescribir el registro anterior?</p>
         <button class="btn-alerta" style="background:#c0392b" id="btn-f">SÍ, SOBRESCRIBIR</button>
         <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
@@ -239,4 +239,5 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
 
