@@ -162,19 +162,18 @@ profesor.onchange = async () => {
   mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
 };
 
-// 1. Cuando cambia la MATERIA, solo habilitamos las HORAS
+// 1. Cuando cambia la MATERIA: habilitamos HORAS y reseteamos el resto
 materia.onchange = async () => {
   if (!materia.value) return;
-  
-  // Habilitamos horas y reseteamos curso para que no haya errores
   horas.disabled = false;
+  horas.value = ""; // Obligamos a elegir 1 o 2
   curso.innerHTML = '<option value="">Seleccione cantidad de horas...</option>';
   curso.disabled = true;
-  lista.innerHTML = ""; // Limpiamos la lista si ya había algo
+  lista.innerHTML = ""; 
   btnG.disabled = true;
 };
 
-// 2. Cuando cambia la CANTIDAD DE HORAS, recién ahí buscamos y habilitamos el CURSO
+// 2. Cuando cambia la CANTIDAD DE HORAS: cargamos y habilitamos el CURSO
 horas.onchange = async () => {
   if (!materia.value || !horas.value) return;
 
@@ -191,20 +190,26 @@ horas.onchange = async () => {
     .in("id", ids)
     .order("nombre");
 
-  curso.innerHTML = '<option value="">Seleccionar...</option>';
+  curso.innerHTML = '<option value="">Seleccionar curso...</option>';
   curso.disabled = false;
   curs.forEach(c => {
     curso.innerHTML += `<option value="${c.id}">${c.nombre} (${c.curso_base})</option>`;
   });
   
-  // Si el curso ya estaba seleccionado, redibujamos los alumnos
-  if (curso.value) {
-    dibujarAlumnos();
-  }
+  // Si ya había un curso seleccionado (por error o cambio rápido), limpiamos alumnos
+  lista.innerHTML = "";
+  btnG.disabled = true;
 };
 
-// 3. Cuando cambia el CURSO, dibujamos los alumnos (esta queda igual)
-curso.onchange = dibujarAlumnos;
+// 3. ¡IMPORTANTE! Cuando cambia el CURSO: Llamamos a dibujarAlumnos
+curso.onchange = () => {
+  if (curso.value) {
+    dibujarAlumnos(); // Esta es la función que hace aparecer la lista
+  } else {
+    lista.innerHTML = "";
+    btnG.disabled = true;
+  }
+};
 
 // --- LÓGICA DE GUARDADO COMPLEJA (RECUPERADA) ---
 btnG.onclick = () => enviar('normal');
@@ -297,6 +302,7 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
 
 
 
