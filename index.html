@@ -260,10 +260,13 @@ async function enviar(modo) {
   if (error) { mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`; btnG.disabled = false; } 
   else { 
     mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`; 
-    setTimeout(() => location.reload(), 2000); 
+    setTimeout(() => {
+        resetFormulario();
+    }, 2000); 
   }
 }
 </script>
 </body>
 </html>
+
 
