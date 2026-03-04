@@ -224,7 +224,8 @@ async function enviar(modo) {
         });
       }
 
-      const alertaTitulo = hayCambios ? `⚠️ Ya has cargado la asistencia con cambios.` : `⚠️ Ya hay una carga idéntica guardada.`;
+      const alertaTitulo = hayCambios ? `⚠️ Ya has cargado la asistencia para este curso y ${cantHorasActual}hs pero ahora tiene cambios.`
+        : `⚠️ Ya hay una carga de ${cantHorasActual} hora(s) guardada hoy exactamente igual.`;
       mensaje.innerHTML = `
         <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
           <p style="color:#d35400; margin:0 0 10px 0;"><b>${alertaTitulo}</b></p>
@@ -265,3 +266,4 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
