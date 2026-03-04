@@ -175,27 +175,48 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
+    // PASO 1: VERIFICAR SI YA EXISTE CARGA
   if (modo === 'normal') {
-    let qV = supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
-    cantHorasActual === "1" ? qV = qV.is("hora2", null) : qV = qV.not("hora2", "is", null);
-    const { data: existentes } = await qV;
+    const { data: existentes } = await supabaseClient
+      .from("asistencia")
+      .select("hora2")
+      .eq("fecha", fecha.value)
+      .eq("profesor_id", profesor.value)
+      .eq("materia_id", materia.value)
+      .eq("curso_id", curso.value)
+      .limit(1);
+
     if (existentes && existentes.length > 0) {
-      let hayCambios = false;
-      regs.forEach(r => {
-        const g = existentes.find(ex => ex.alumno_id == r.alumno_id);
-        if (g && (g.hora1 !== r.hora1 || g.hora2 !== r.hora2)) hayCambios = true;
-      });
-      const alertaTitulo = hayCambios ? `⚠️ Ya has cargado la asistencia con cambios.` : `⚠️ Ya hay una carga idéntica hoy.`;
-      mensaje.innerHTML = `<div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;"><p style="color:#d35400;"><b>${alertaTitulo}</b></p><button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button><button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR ANTERIOR</button><button class="btn-alerta" style="background:#e74c3c" onclick="resetFormulario()">CANCELAR</button></div>`;
-      btnG.disabled = false; btnG.textContent = "Guardar asistencia"; return;
+      const yaCargoDos = existentes[0].hora2 !== null;
+      const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
+      mensaje.innerHTML = `
+        <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
+          <p style="color:#d35400; margin:0 0 10px 0;">?? <b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
+          <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
+          <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
+          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR ANTERIOR</button>
+          <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
+        </div>`;
+      btnG.disabled = false;
+      btnG.textContent = "Guardar asistencia";
+      return;
     }
   }
 
+  // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
   if (modo === 'pre-sobrescribir') {
-    mensaje.innerHTML = `<div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;"><p style="color:#c0392b; font-weight:bold;">¿Confirmas reemplazar?</p><button class="btn-alerta" style="background:#c0392b" id="btn-reemplazo-f">SÍ, REEMPLAZAR</button><button class="btn-alerta" style="background:#7f8c8d" onclick="resetFormulario()">NO, VOLVER</button></div>`;
-    document.getElementById("btn-reemplazo-f").onclick = () => enviar('confirmar-sobrescribir'); return;
+    mensaje.innerHTML = `
+      <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
+        <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro que deseas sobrescribir el registro anterior?</p>
+        <button class="btn-alerta" style="background:#c0392b" id="btn-f">SÍ, SOBRESCRIBIR</button>
+        <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
+      </div>`;
+    document.getElementById("btn-f").onclick = () => {
+        document.getElementById("btn-f").disabled = true;
+        enviar('confirmar-sobrescribir');
+    };
+    return;
   }
-
   if (modo === 'confirmar-sobrescribir') {
     let qB = supabaseClient.from("asistencia").delete().eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
     cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null); await qB;
@@ -218,3 +239,4 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
