@@ -144,21 +144,39 @@ function actualizarColor(el) {
 }
 
 fecha.onchange = async () => {
-  if (!fecha.value) return;
-  const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
-  profesor.innerHTML = '<option value="">Seleccionar...</option>';
-  data.forEach(p => profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`);
-  profesor.disabled = false;
+    if (!fecha.value) return;
+    
+    // 1. Cargamos la lista de profesores de la base de datos
+    const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
+    
+    profesor.innerHTML = '<option value="">Seleccionar...</option>';
+    data.forEach(p => {
+        profesor.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+    });
 
-  // AUTO-SELECCIÓN: Si el usuario del login coincide con un profesor
-  const nombreLogueado = loginUser.value.trim();
-  for (let i = 0; i < profesor.options.length; i++) {
-    if (profesor.options[i].text.toLowerCase() === nombreLogueado.toLowerCase()) {
-      profesor.selectedIndex = i;
-      profesor.onchange(); // Dispara la carga de materias
-      break;
+    // 2. AUTO-SELECCIÓN: Usamos el nombre con el que se logueó
+    const nombreLogueado = loginUser.value.trim().toLowerCase();
+    
+    let encontrado = false;
+    for (let i = 0; i < profesor.options.length; i++) {
+        if (profesor.options[i].text.toLowerCase() === nombreLogueado) {
+            profesor.selectedIndex = i;
+            
+            // --- AQUÍ ESTÁ EL BLOQUEO ---
+            profesor.disabled = true; // Bloqueamos el desplegable para que no lo cambien
+            
+            // Disparamos manualmente el evento para que cargue las materias de ese profesor
+            profesor.onchange(); 
+            encontrado = true;
+            break;
+        }
     }
-  }
+
+    if (!encontrado) {
+        // Si por alguna razón el nombre del login no está en la tabla de profesores
+        profesor.disabled = false; 
+        console.warn("El usuario logueado no coincide con ningún profesor de la lista.");
+    }
 };
 
 profesor.onchange = async () => {
@@ -226,6 +244,7 @@ async function enviar(modo) {
 </script>
 </body>
 </html>
+
 
 
 
