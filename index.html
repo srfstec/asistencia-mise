@@ -172,43 +172,63 @@ async function enviar(modo) {
   mensaje.innerHTML = "";
 
   const cantHorasActual = horas.value;
+  const textoHoras = cantHorasActual === "1" ? "1 hora" : "2 horas";
+
   const regs = Array.from(document.querySelectorAll("#lista-alumnos div[data-id]")).map(f => ({
     fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
     alumno_id: f.dataset.id, hora1: f.querySelector(".h1").value,
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-  // PASO 1: VERIFICAR SI YA EXISTE CARGA
   if (modo === 'normal') {
-    const { data: existentes } = await supabaseClient
-      .from("asistencia")
-      .select("hora2")
+    // Buscamos los registros existentes para comparar
+    let qV = supabaseClient.from("asistencia")
+      .select("alumno_id, hora1, hora2")
       .eq("fecha", fecha.value)
       .eq("profesor_id", profesor.value)
       .eq("materia_id", materia.value)
-      .eq("curso_id", curso.value)
-      .limit(1);
+      .eq("curso_id", curso.value);
+    
+    cantHorasActual === "1" ? qV = qV.is("hora2", null) : qV = qV.not("hora2", "is", null);
+    
+    const { data: existentes } = await qV;
 
     if (existentes && existentes.length > 0) {
-      // Reconocemos si lo guardado anteriormente era de 1 o 2 horas
-      const yaCargoDos = existentes[0].hora2 !== null;
-      const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
+      // LÓGICA DE COMPARACIÓN
+      let hayCambios = false;
+      if (existentes.length !== regs.length) { 
+        hayCambios = true; 
+      } else {
+        regs.forEach(r => {
+          const guardado = existentes.find(ex => ex.alumno_id == r.alumno_id);
+          // Si no encuentra al alumno o si las horas son distintas, hay cambios
+          if (!guardado || guardado.hora1 !== r.hora1 || guardado.hora2 !== r.hora2) {
+            hayCambios = true;
+          }
+        });
+      }
+
+      // Definimos el título según si hubo cambios o no
+      const alertaTitulo = hayCambios 
+        ? `⚠️ Ya has cargado la asistencia para este curso y <b>${textoHoras}</b> pero ahora tiene cambios.`
+        : `⚠️ Ya hay una carga de <b>${textoHoras}</b> guardada hoy exactamente igual.`;
 
       mensaje.innerHTML = `
         <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;"><b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
+          <p style="color:#d35400; margin:0 0 10px 0;">${alertaTitulo}</p>
           <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
           <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
           <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR ANTERIOR</button>
           <button class="btn-alerta" style="background:#e74c3c" onclick="resetFormulario()">CANCELAR</button>
         </div>`;
+      
       btnG.disabled = false;
       btnG.textContent = "Guardar asistencia";
       return;
     }
   }
 
-  // PASO 2: CONFIRMACIÓN PARA SOBRESCRIBIR
+  // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
       <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
@@ -234,6 +254,7 @@ async function enviar(modo) {
     await qB;
   }
 
+  // GUARDADO FINAL (NUEVA O SOBRESCRITA)
   const { error } = await supabaseClient.from("asistencia").insert(regs);
   if (error) { 
     mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`; 
@@ -243,7 +264,6 @@ async function enviar(modo) {
     setTimeout(() => resetFormulario(), 2000); 
   }
 }
-
 function resetFormulario() {
   fecha.value = "";
   materia.innerHTML = '<option value="">Seleccione profesor...</option>'; 
@@ -261,6 +281,7 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
 
 
 
