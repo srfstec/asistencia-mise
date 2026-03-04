@@ -163,11 +163,14 @@ async function dibujarAlumnos() {
 
 btnG.onclick = () => enviar('normal');
 
+/* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. SISTEMA EXCLUSIVO PARA MISE SEC. */
+
 async function enviar(modo) {
   if (!fecha.value || !curso.value) return alert("Faltan datos");
   btnG.disabled = true;
   btnG.textContent = "Procesando...";
   mensaje.innerHTML = "";
+
   const cantHorasActual = horas.value;
   const regs = Array.from(document.querySelectorAll("#lista-alumnos div[data-id]")).map(f => ({
     fecha: fecha.value, profesor_id: profesor.value, materia_id: materia.value, curso_id: curso.value,
@@ -175,7 +178,7 @@ async function enviar(modo) {
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
 
-    // PASO 1: VERIFICAR SI YA EXISTE CARGA
+  // PASO 1: VERIFICAR SI YA EXISTE CARGA
   if (modo === 'normal') {
     const { data: existentes } = await supabaseClient
       .from("asistencia")
@@ -187,15 +190,17 @@ async function enviar(modo) {
       .limit(1);
 
     if (existentes && existentes.length > 0) {
+      // Reconocemos si lo guardado anteriormente era de 1 o 2 horas
       const yaCargoDos = existentes[0].hora2 !== null;
       const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
+
       mensaje.innerHTML = `
-       <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
-          <p style="color:#d35400; margin:0 0 10px 0;">?? <b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
+        <div style="background:#fff; padding:15px; border:2px solid #d35400; border-radius:8px; margin-top:10px; color:#333; text-align:center;">
+          <p style="color:#d35400; margin:0 0 10px 0;"><b>Atención:</b> Ya has cargado asistencia hoy en <b>${textoHoras}</b>.</p>
           <p>¿Deseas continuar con una <b>nueva carga</b> o <b>borrar y sobrescribir</b> la anterior?</p>
           <button class="btn-alerta" style="background:#27ae60" onclick="enviar('nueva')">NUEVA CARGA</button>
-          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">SOBRESCRIBIR ANTERIOR</button>
-          <button class="btn-alerta" style="background:#e74c3c" onclick="location.reload()">CANCELAR</button>
+          <button class="btn-alerta" style="background:#f39c12" onclick="enviar('pre-sobrescribir')">REEMPLAZAR ANTERIOR</button>
+          <button class="btn-alerta" style="background:#e74c3c" onclick="resetFormulario()">CANCELAR</button>
         </div>`;
       btnG.disabled = false;
       btnG.textContent = "Guardar asistencia";
@@ -203,13 +208,13 @@ async function enviar(modo) {
     }
   }
 
-  // PASO 2: CONFIRMACIÓN ROJA PARA SOBRESCRIBIR
+  // PASO 2: CONFIRMACIÓN PARA SOBRESCRIBIR
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `
-     <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
+      <div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; margin-top:10px; text-align:center;">
         <p style="color:#c0392b; font-weight:bold; margin-bottom:10px;">¿Estás seguro que deseas sobrescribir el registro anterior?</p>
         <button class="btn-alerta" style="background:#c0392b" id="btn-f">SÍ, SOBRESCRIBIR</button>
-        <button class="btn-alerta" style="background:#7f8c8d" onclick="location.reload()">NO, VOLVER</button>
+        <button class="btn-alerta" style="background:#7f8c8d" onclick="resetFormulario()">NO, VOLVER</button>
       </div>`;
     document.getElementById("btn-f").onclick = () => {
         document.getElementById("btn-f").disabled = true;
@@ -217,27 +222,45 @@ async function enviar(modo) {
     };
     return;
   }
+
   if (modo === 'confirmar-sobrescribir') {
-    let qB = supabaseClient.from("asistencia").delete().eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
-    cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null); await qB;
+    let qB = supabaseClient.from("asistencia").delete()
+      .eq("fecha", fecha.value)
+      .eq("profesor_id", profesor.value)
+      .eq("materia_id", materia.value)
+      .eq("curso_id", curso.value);
+    
+    cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null); 
+    await qB;
   }
 
   const { error } = await supabaseClient.from("asistencia").insert(regs);
-  if (error) { mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`; btnG.disabled = false; } 
-  else { mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`; setTimeout(() => resetFormulario(), 2000); }
+  if (error) { 
+    mensaje.innerHTML = `<p style="color:red">❌ Error: ${error.message}</p>`; 
+    btnG.disabled = false; 
+  } else { 
+    mensaje.innerHTML = `<p style="color:green; font-size:1.2em;">✅ ¡Guardado con éxito!</p>`; 
+    setTimeout(() => resetFormulario(), 2000); 
+  }
 }
 
 function resetFormulario() {
   fecha.value = "";
-  materia.innerHTML = '<option value="">Seleccione profesor...</option>'; materia.disabled = true;
-  curso.innerHTML = '<option value="">Seleccione materia...</option>'; curso.disabled = true;
-  horas.value = ""; horas.disabled = true;
-  lista.innerHTML = ""; mensaje.innerHTML = "";
-  btnG.disabled = true; btnG.textContent = "Guardar asistencia";
+  materia.innerHTML = '<option value="">Seleccione profesor...</option>'; 
+  materia.disabled = true;
+  curso.innerHTML = '<option value="">Seleccione materia...</option>'; 
+  curso.disabled = true;
+  horas.value = ""; 
+  horas.disabled = true;
+  lista.innerHTML = ""; 
+  mensaje.innerHTML = "";
+  btnG.disabled = true; 
+  btnG.textContent = "Guardar asistencia";
   window.scrollTo(0, 0);
 }
 </script>
 </body>
 </html>
+
 
 
