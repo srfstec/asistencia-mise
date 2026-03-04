@@ -203,8 +203,7 @@ horas.onchange = async () => {
 
 // 3. ¡IMPORTANTE! Cuando cambia el CURSO: Llamamos a dibujarAlumnos
 curso.onchange = () => {
-  if (!curso.value) return;
-  {
+  if (curso.value)  {
     dibujarAlumnos(); // Esta es la función que hace aparecer la lista
   } else {
     lista.innerHTML = "";
@@ -303,6 +302,7 @@ function resetFormulario() {
 </script>
 </body>
 </html>
+
 
 
 
