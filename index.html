@@ -345,7 +345,6 @@ async function generarReporteCurso() {
   alus.forEach(a => {
     const f1 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length : 0;
     const f2 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora2 === 'ausente').length : 0;
-    const total = f1 + f2;
     let colorFalta = total === 0 ? "#27ae60" : (total <= 4 ? "#3498db" : "#e74c3c");
     divRes.innerHTML += `<div class="fila-reporte"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><span class="contador-faltas" style="background: ${colorFalta}; color: white;">${total} faltas</span></div>`;
   });
@@ -353,4 +352,5 @@ async function generarReporteCurso() {
 </script>
 </body>
 </html>
+
 
