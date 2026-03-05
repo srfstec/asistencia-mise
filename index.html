@@ -98,11 +98,11 @@
         
         <label>⏳ Bimestre:</label>
         <select id="inf-bimestre" disabled>
-          <option value="todos">Todos</option>
+          <option value="todos">Todos(02/03 - 04/125)</option>
           <option value="1">1ro (02/03 - 06/05)</option>
           <option value="2">2do (07/05 - 14/08)</option>
           <option value="3">3ro (17/08 - 23/10)</option>
-          <option value="4">4to (26/10 - 18/12)</option>
+          <option value="4">4to (26/10 - 04/12)</option>
         </select>
       </div>
 
@@ -310,11 +310,12 @@ async function generarReporteAlumno() {
     .eq("materia_id", infMateria.value);
 
   // Rangos de fecha
+  if (bim === "todos") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-12-04");
   if (bim === "1") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-05-06");
   if (bim === "2") query = query.gte("fecha", "2026-05-07").lte("fecha", "2026-08-14");
   if (bim === "3") query = query.gte("fecha", "2026-08-17").lte("fecha", "2026-10-23");
   if (bim === "4") query = query.gte("fecha", "2026-10-26").lte("fecha", "2026-12-04");
-  if (bim === "total") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-12-04");
+  
 
   const { data: asis } = await query;
   
@@ -352,5 +353,6 @@ async function generarReporteCurso() {
 </script>
 </body>
 </html>
+
 
 
