@@ -1,9 +1,10 @@
+/* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. SISTEMA EXCLUSIVO PARA MISE SEC. */
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Mise SEC - v.1.0.5</title>
+  <title>App Mise SEC - v.1.0.6</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
@@ -32,6 +33,7 @@
     .btn-alerta { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; width: 100%; }
     
     .contador-faltas { padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .titulo-seccion { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -47,7 +49,7 @@
 <div id="app-content" style="display: none;">
   <div class="container">
     <div class="header-container">
-      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.5</span></h2>
+      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.6</span></h2>
       <img src="Logo Mise 2025.png" class="logo">
     </div>
 
@@ -78,10 +80,36 @@
     </div>
 
     <div id="seccion-informe" style="display:none;">
+      <div class="titulo-seccion">
+        <h3>📊 Informes</h3>
+      </div>
+      
+      <label>📋 Tipo de Informe:</label>
+      <select id="inf-tipo">
+        <option value="curso">1. Informe por curso</option>
+        <option value="alumno">2. Informe por alumno</option>
+      </select>
+
       <label>📚 Materia:</label>
       <select id="inf-materia" disabled><option value="">Seleccione una materia...</option></select>
+      
       <label>🏫 Curso:</label>
       <select id="inf-curso" disabled><option value="">Seleccione materia primero...</option></select>
+      
+      <div id="campos-alumno" style="display:none;">
+        <label>👤 Alumno:</label>
+        <select id="inf-alumno"><option value="">Seleccione un alumno...</option></select>
+        
+        <label>⏳ Bimestre:</label>
+        <select id="inf-bimestre">
+          <option value="todos">Todos</option>
+          <option value="1">1ro</option>
+          <option value="2">2do</option>
+          <option value="3">3ro</option>
+          <option value="4">4to</option>
+        </select>
+      </div>
+
       <hr>
       <div id="resultado-informe"></div>
     </div>
@@ -123,7 +151,7 @@ btnEntrar.onclick = async () => {
     else { loginContainer.style.display = "none"; appContent.style.display = "block"; }
 };
 
-// --- LÓGICA DE CARGA ---
+// --- LÓGICA DE CARGA (INTACTA) ---
 fecha.onchange = async () => {
   if (!fecha.value) return;
   const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
@@ -137,27 +165,20 @@ fecha.onchange = async () => {
     }
   }
 };
-
 async function actualizarMaterias(profId) {
   const { data: dm } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profId);
   const { data: mats } = await supabaseClient.from("materias").select("*").in("id", dm.map(r => r.materia_id)).order("nombre");
   materia.innerHTML = '<option value="">Seleccionar...</option>'; materia.disabled = false;
   mats.forEach(m => materia.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
 }
-
 materia.onchange = () => { horas.disabled = false; horas.value = ""; curso.disabled = true; lista.innerHTML = ""; btnG.disabled = true; };
-
 horas.onchange = async () => {
   const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
   const { data: curs } = await supabaseClient.from("curso").select("*").in("id", data.map(r => r.curso_id)).order("nombre");
   curso.innerHTML = '<option value="">Seleccionar curso...</option>'; curso.disabled = false;
-  curs.forEach(c => {
-    curso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
-  });
+  curs.forEach(c => { curso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`; });
 };
-
 curso.onchange = () => { if(curso.value) dibujarAlumnos(); };
-
 async function dibujarAlumnos() {
   lista.innerHTML = "Cargando...";
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", curso.value);
@@ -170,11 +191,8 @@ async function dibujarAlumnos() {
   });
   btnG.disabled = false;
 }
-
 function actualizarColor(el) { el.classList.remove('estado-ausente', 'estado-tarde', 'estado-presente'); el.classList.add('estado-' + el.value); }
-
 btnG.onclick = () => enviar('normal');
-
 async function enviar(modo) {
   const cantHorasActual = horas.value;
   const regs = Array.from(document.querySelectorAll("#lista-alumnos div[data-id]")).map(f => ({
@@ -182,12 +200,10 @@ async function enviar(modo) {
     alumno_id: f.dataset.id, hora1: f.querySelector(".h1").value,
     hora2: f.querySelector(".h2") ? f.querySelector(".h2").value : null
   }));
-
   if (modo === 'normal') {
     let qV = supabaseClient.from("asistencia").select("*").eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
     cantHorasActual === "1" ? qV.is("hora2", null) : qV.not("hora2", "is", null);
     const { data: existentes } = await qV;
-
     if (existentes?.length > 0) {
       const yaCargoDos = existentes[0].hora2 !== null;
       const textoHoras = yaCargoDos ? "2 horas" : "1 hora";
@@ -201,26 +217,39 @@ async function enviar(modo) {
       return;
     }
   }
-
   if (modo === 'pre-sobrescribir') {
     mensaje.innerHTML = `<div style="background:#fff; padding:15px; border:2px solid #c0392b; border-radius:8px; text-align:center;"><p style="color:#c0392b; font-weight:bold;">¿Estás seguro que deseas sobrescribir el registro anterior?</p><button class="btn-alerta" style="background:#c0392b" id="btn-f-ok">SÍ, SOBRESCRIBIR</button><button class="btn-alerta" style="background:#7f8c8d" onclick="resetFormulario()">NO, VOLVER</button></div>`;
     document.getElementById("btn-f-ok").onclick = () => enviar('confirmar-sobrescribir'); return;
   }
-
   if (modo === 'confirmar-sobrescribir') {
     let qB = supabaseClient.from("asistencia").delete().eq("fecha", fecha.value).eq("profesor_id", profesor.value).eq("materia_id", materia.value).eq("curso_id", curso.value);
     cantHorasActual === "1" ? qB.is("hora2", null) : qB.not("hora2", "is", null); await qB;
   }
-
   const { error } = await supabaseClient.from("asistencia").insert(regs);
   if (!error) { mensaje.innerHTML = "✅ ¡Guardado con éxito!"; setTimeout(() => resetFormulario(), 2000); }
 }
-
 function resetFormulario() {
   fecha.value = ""; materia.disabled = true; curso.disabled = true; horas.disabled = true; lista.innerHTML = ""; mensaje.innerHTML = ""; btnG.disabled = true; window.scrollTo(0,0);
 }
 
-// --- LÓGICA DE INFORMES ---
+// --- LÓGICA DE INFORMES (MODIFICADA) ---
+
+const infTipo = document.getElementById("inf-tipo");
+const infMateria = document.getElementById("inf-materia");
+const infCurso = document.getElementById("inf-curso");
+const infAlumno = document.getElementById("inf-alumno");
+const camposAlumno = document.getElementById("campos-alumno");
+const divRes = document.getElementById("resultado-informe");
+
+// Cambio de Tipo de Informe
+infTipo.onchange = () => {
+  infMateria.value = "";
+  infCurso.innerHTML = '<option value="">Seleccione materia primero...</option>';
+  infCurso.disabled = true;
+  camposAlumno.style.display = "none";
+  divRes.innerHTML = "";
+};
+
 async function obtenerIdProfesorLogueado() {
   const logName = loginUser.value.toLowerCase();
   const { data } = await supabaseClient.from("profesores").select("*");
@@ -234,58 +263,68 @@ async function cargarMateriasInformes() {
   const { data: dm } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profId);
   const { data: mats } = await supabaseClient.from("materias").select("*").in("id", dm.map(r => r.materia_id)).order("nombre");
   
-  const selM = document.getElementById("inf-materia");
-  selM.innerHTML = '<option value="">Seleccionar materia...</option>'; 
-  selM.disabled = false;
-  mats.forEach(m => selM.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
-  
-  document.getElementById("inf-curso").innerHTML = '<option value="">Seleccione materia primero...</option>';
-  document.getElementById("inf-curso").disabled = true;
-  document.getElementById("resultado-informe").innerHTML = "";
+  infMateria.innerHTML = '<option value="">Seleccionar materia...</option>'; 
+  infMateria.disabled = false;
+  mats.forEach(m => infMateria.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
 }
 
-document.getElementById("inf-materia").onchange = async () => {
-  const mId = document.getElementById("inf-materia").value;
+infMateria.onchange = async () => {
   const profId = await obtenerIdProfesorLogueado();
-  if (!mId || !profId) return;
+  if (!infMateria.value || !profId) return;
 
-  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profId).eq("materia_id", mId);
+  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profId).eq("materia_id", infMateria.value);
   const { data: curs } = await supabaseClient.from("curso").select("*").in("id", data.map(r => r.curso_id)).order("nombre");
     
-  const selC = document.getElementById("inf-curso");
-  selC.innerHTML = '<option value="">Seleccionar curso...</option>'; 
-  selC.disabled = false;
-  
+  infCurso.innerHTML = '<option value="">Seleccionar curso...</option>'; 
+  infCurso.disabled = false;
   curs.forEach(c => {
-    selC.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
+    infCurso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
   });
-  document.getElementById("resultado-informe").innerHTML = "";
+  divRes.innerHTML = "";
+  camposAlumno.style.display = "none";
 };
 
-document.getElementById("inf-curso").onchange = async () => {
-  const mId = document.getElementById("inf-materia").value;
-  const cId = document.getElementById("inf-curso").value;
-  const divRes = document.getElementById("resultado-informe");
-  if (!cId || !mId) return;
+infCurso.onchange = async () => {
+  if (!infCurso.value) return;
 
+  if (infTipo.value === "curso") {
+    generarReporteCurso();
+  } else {
+    // Modo Alumno: Cargar lista de alumnos del curso
+    camposAlumno.style.display = "block";
+    divRes.innerHTML = "";
+    infAlumno.innerHTML = '<option value="">Cargando alumnos...</option>';
+    
+    const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", infCurso.value);
+    const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", rel.map(r => r.alumno_id)).order("apellido");
+    
+    infAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
+    alus.forEach(a => {
+      infAlumno.innerHTML += `<option value="${a.id}">${a.apellido}, ${a.nombre}</option>`;
+    });
+  }
+};
+
+async function generarReporteCurso() {
   divRes.innerHTML = "Consultando faltas...";
-  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", cId);
+  const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", infCurso.value);
   const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", rel.map(r => r.alumno_id)).order("apellido");
-  const { data: asis } = await supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("curso_id", cId).eq("materia_id", mId);
+  const { data: asis } = await supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("curso_id", infCurso.value).eq("materia_id", infMateria.value);
 
   divRes.innerHTML = "";
   alus.forEach(a => {
     const f1 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length : 0;
     const f2 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora2 === 'ausente').length : 0;
     const total = f1 + f2;
-
-    let colorFalta = "#27ae60"; 
-    if (total >= 1 && total <= 4) colorFalta = "#3498db"; 
-    else if (total >= 5) colorFalta = "#e74c3c"; 
-
+    let colorFalta = total === 0 ? "#27ae60" : (total <= 4 ? "#3498db" : "#e74c3c");
     divRes.innerHTML += `<div class="fila-reporte"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><span class="contador-faltas" style="background: ${colorFalta}; color: white;">${total} faltas</span></div>`;
   });
-};
+}
+
+// Evento para cuando se selecciona un Alumno o un Bimestre
+infAlumno.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Listo para procesar bimestre...</i>"; };
+document.getElementById("inf-bimestre").onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Cambio de bimestre detectado...</i>"; };
+
 </script>
 </body>
 </html>
