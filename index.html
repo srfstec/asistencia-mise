@@ -1,4 +1,3 @@
-/* PROPIEDAD INTELECTUAL DE SANTIAGO FRANCO PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL SIN AUTORIZACIÓN. SISTEMA EXCLUSIVO PARA MISE SEC. */
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -59,28 +58,25 @@
 
     <div id="seccion-carga">
       <label>📅 Fecha:</label>
-    <input type="date" id="fecha">
-    <label>👤 Profesor:</label>
-    <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
-    <label>📚 Materia:</label>
-    <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
-    <label>⏱️ Cantidad de horas:</label>
-    <select id="cant-horas" disabled>
-      <option value="" selected disabled>Seleccionar horas...</option>
-      <option value="1">1 Hora</option>
-      <option value="2">2 Horas</option>
-    </select>
-    <label>🏫 Curso:</label>
-    <select id="curso" disabled><option value="">Seleccione materia...</option></select>
-    <hr>
-    <div id="lista-alumnos"></div>
-    <div id="mensaje"></div>
-    <button id="guardar" disabled>Guardar asistencia</button>
-    <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 13px; color: #2c3e50;">
-      Creador <b>Santiago Franco</b> © 2026
+      <input type="date" id="fecha">
+      <label>👤 Profesor:</label>
+      <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
+      <label>📚 Materia:</label>
+      <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
+      <label>⏱️ Cantidad de horas:</label>
+      <select id="cant-horas" disabled>
+        <option value="" selected disabled>Seleccionar horas...</option>
+        <option value="1">1 Hora</option>
+        <option value="2">2 Horas</option>
+      </select>
+      <label>🏫 Curso:</label>
+      <select id="curso" disabled><option value="">Seleccione materia...</option></select>
+      <hr>
+      <div id="lista-alumnos"></div>
+      <div id="mensaje"></div>
+      <button id="guardar" disabled>Guardar asistencia</button>
     </div>
-  </div>
-</div>
+
     <div id="seccion-informe" style="display:none;">
       <label>📚 Materia:</label>
       <select id="inf-materia" disabled><option value="">Seleccione una materia...</option></select>
@@ -112,7 +108,7 @@ function verSeccion(tipo) {
   document.getElementById('tab-informe').classList.toggle('active', tipo === 'informe');
   
   if(tipo === 'informe') {
-    cargarMateriasInformes(); // CORREGIDO: Llama a la función correcta de materias
+    cargarMateriasInformes();
   }
 }
 
@@ -127,7 +123,7 @@ btnEntrar.onclick = async () => {
     else { loginContainer.style.display = "none"; appContent.style.display = "block"; }
 };
 
-// --- LÓGICA DE CARGA (PROHIBIDO CAMBIAR LÓGICA DE GUARDADO) ---
+// --- LÓGICA DE CARGA ---
 fecha.onchange = async () => {
   if (!fecha.value) return;
   const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
@@ -155,8 +151,6 @@ horas.onchange = async () => {
   const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
   const { data: curs } = await supabaseClient.from("curso").select("*").in("id", data.map(r => r.curso_id)).order("nombre");
   curso.innerHTML = '<option value="">Seleccionar curso...</option>'; curso.disabled = false;
-  
-  // ARREGLO VISUAL CARGA: Nombre + Orientación
   curs.forEach(c => {
     curso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
   });
@@ -226,8 +220,7 @@ function resetFormulario() {
   fecha.value = ""; materia.disabled = true; curso.disabled = true; horas.disabled = true; lista.innerHTML = ""; mensaje.innerHTML = ""; btnG.disabled = true; window.scrollTo(0,0);
 }
 
-// --- LÓGICA DE INFORMES (ORDEN: MATERIA -> CURSO) ---
-
+// --- LÓGICA DE INFORMES ---
 async function obtenerIdProfesorLogueado() {
   const logName = loginUser.value.toLowerCase();
   const { data } = await supabaseClient.from("profesores").select("*");
@@ -263,7 +256,6 @@ document.getElementById("inf-materia").onchange = async () => {
   selC.innerHTML = '<option value="">Seleccionar curso...</option>'; 
   selC.disabled = false;
   
-  // Arreglo visual Informes: Nombre + Orientación
   curs.forEach(c => {
     selC.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
   });
@@ -297,4 +289,3 @@ document.getElementById("inf-curso").onchange = async () => {
 </script>
 </body>
 </html>
-
