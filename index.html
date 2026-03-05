@@ -271,10 +271,27 @@ document.getElementById("inf-materia").onchange = async () => {
   alus.forEach(a => {
     const f1 = asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length;
     const f2 = asis.filter(f => f.alumno_id == a.id && f.hora2 === 'ausente').length;
-    divRes.innerHTML += `<div class="fila-reporte"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><span class="contador-faltas">${f1 + f2} faltas</span></div>`;
+    const total = f1 + f2;
+
+    // Lógica de colores solicitada
+    let colorFalta = "#27ae60"; // Verde por defecto (0 faltas)
+    if (total >= 1 && total <= 4) {
+      colorFalta = "#3498db"; // Azul (1 a 4 faltas)
+    } else if (total >= 5) {
+      colorFalta = "#e74c3c"; // Rojo (5 o más faltas)
+    }
+
+    divRes.innerHTML += `
+      <div class="fila-reporte">
+        <b class="alumno-nombre">${a.apellido}, ${a.nombre}</b>
+        <span class="contador-faltas" style="background: ${colorFalta}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;">
+          ${total} faltas
+        </span>
+      </div>`;
   });
 };
 </script>
 </body>
 </html>
+
 
