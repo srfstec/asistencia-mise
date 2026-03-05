@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Mise SEC - v.1.0.8</title>
+  <title>App Mise SEC - v.1.1.0</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
@@ -33,6 +33,7 @@
     .btn-alerta { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; width: 100%; }
     
     .contador-faltas { padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .resumen-bimestre { background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid var(--secondary); }
   </style>
 </head>
 <body>
@@ -48,7 +49,7 @@
 <div id="app-content" style="display: none;">
   <div class="container">
     <div class="header-container">
-      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.8</span></h2>
+      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.1.0</span></h2>
       <img src="Logo Mise 2025.png" class="logo">
     </div>
 
@@ -98,10 +99,10 @@
         <label>⏳ Bimestre:</label>
         <select id="inf-bimestre" disabled>
           <option value="todos">Todos</option>
-          <option value="1">1ro</option>
-          <option value="2">2do</option>
-          <option value="3">3ro</option>
-          <option value="4">4to</option>
+          <option value="1">1ro (02/03 - 06/05)</option>
+          <option value="2">2do (07/05 - 14/08)</option>
+          <option value="3">3ro (17/08 - 23/10)</option>
+          <option value="4">4to (26/10 - 18/12)</option>
         </select>
       </div>
 
@@ -278,7 +279,7 @@ infCurso.onchange = async () => {
     generarReporteCurso();
   } else {
     camposAlumno.style.display = "block";
-    infBimestre.disabled = true; // Sigue bloqueado hasta elegir alumno
+    infBimestre.disabled = true;
     divRes.innerHTML = "";
     infAlumno.innerHTML = '<option value="">Cargando alumnos...</option>';
     const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", infCurso.value);
@@ -288,16 +289,51 @@ infCurso.onchange = async () => {
   }
 };
 
-// Lógica de habilitación de Bimestre
 infAlumno.onchange = () => {
   if(infAlumno.value) {
     infBimestre.disabled = false;
-    divRes.innerHTML = "<i>Seleccione bimestre para ver reporte.</i>";
+    infBimestre.value = "todos";
+    generarReporteAlumno();
   } else {
     infBimestre.disabled = true;
     divRes.innerHTML = "";
   }
 };
+
+infBimestre.onchange = () => generarReporteAlumno();
+
+async function generarReporteAlumno() {
+  divRes.innerHTML = "Calculando...";
+  const bim = infBimestre.value;
+  let query = supabaseClient.from("asistencia").select("*")
+    .eq("alumno_id", infAlumno.value)
+    .eq("materia_id", infMateria.value);
+
+  // Rangos de fecha
+  if (bim === "1") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-05-06");
+  if (bim === "2") query = query.gte("fecha", "2026-05-07").lte("fecha", "2026-08-14");
+  if (bim === "3") query = query.gte("fecha", "2026-08-17").lte("fecha", "2026-10-23");
+  if (bim === "4") query = query.gte("fecha", "2026-10-26").lte("fecha", "2026-12-18");
+
+  const { data: asis } = await query;
+  
+  const f1 = asis ? asis.filter(f => f.hora1 === 'ausente').length : 0;
+  const f2 = asis ? asis.filter(f => f.hora2 === 'ausente').length : 0;
+  const total = f1 + f2;
+  
+  let colorFalta = total === 0 ? "#27ae60" : (total <= 4 ? "#3498db" : "#e74c3c");
+  const nombreAlumno = infAlumno.options[infAlumno.selectedIndex].text;
+  const textoBim = infBimestre.options[infBimestre.selectedIndex].text;
+
+  divRes.innerHTML = `
+    <div class="resumen-bimestre">
+      <h3 style="margin:0; color:var(--primary);">${nombreAlumno}</h3>
+      <p style="margin:5px 0; color:#666;">Bimestre: <b>${textoBim}</b></p>
+      <div style="font-size: 40px; font-weight: bold; color: ${colorFalta};">${total}</div>
+      <p style="margin:0; font-weight:bold; color:${colorFalta};">FALTAS TOTALES</p>
+    </div>
+  `;
+}
 
 async function generarReporteCurso() {
   divRes.innerHTML = "Consultando faltas...";
@@ -313,9 +349,6 @@ async function generarReporteCurso() {
     divRes.innerHTML += `<div class="fila-reporte"><b class="alumno-nombre">${a.apellido}, ${a.nombre}</b><span class="contador-faltas" style="background: ${colorFalta}; color: white;">${total} faltas</span></div>`;
   });
 }
-
-infBimestre.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Procesando reporte de bimestre...</i>"; };
-
 </script>
 </body>
 </html>
