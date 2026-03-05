@@ -81,13 +81,14 @@
     </div>
 
     <div id="seccion-informe" style="display:none;">
-      <label>🏫 Seleccionar Curso:</label>
-      <select id="inf-curso"><option value="">Cargando cursos...</option></select>
       <label>📚 Materia:</label>
-      <select id="inf-materia" disabled><option value="">Seleccione curso...</option></select>
-      <hr>
-      <div id="resultado-informe"></div>
-    </div>
+  <select id="inf-materia" disabled><option value="">Seleccione una materia...</option></select>
+  
+  <label>🏫 Curso:</label>
+  <select id="inf-curso" disabled><option value="">Seleccione materia primero...</option></select>
+  <hr>
+  <div id="resultado-informe"></div>
+</div>
 
     <div style="text-align: center; margin-top: 25px; font-size: 13px; color: #2c3e50; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 10px;">
       Creador <b>Santiago Franco</b> © 2026
@@ -249,48 +250,87 @@ function resetFormulario() {
 }
 
 // --- LÓGICA DE INFORMES ---
-async function cargarCursosInformes() {
-  const { data } = await supabaseClient.from("curso").select("*").order("nombre");
-  const selC = document.getElementById("inf-curso");
-  selC.innerHTML = '<option value="">Seleccionar curso...</option>';
- data.forEach(c => {
-    selC.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
-  });
+// Función para obtener el ID del profesor logueado
+async function obtenerIdProfesorLogueado() {
+  const logName = loginUser.value.toLowerCase();
+  const { data } = await supabaseClient.from("profesores").select("*");
+  const p = data.find(prof => prof.nombre.toLowerCase() === logName);
+  return p ? p.id : null;
 }
 
-document.getElementById("inf-curso").onchange = async () => {
-  const cId = document.getElementById("inf-curso").value;
-  if(!cId) return;
-  const { data } = await supabaseClient.from("profesores_materias_curso").select("materia_id").eq("curso_id", cId);
-  const ids = [...new Set(data.map(r => r.materia_id))];
-  const { data: mats } = await supabaseClient.from("materias").select("*").in("id", ids).order("nombre");
+async function cargarMateriasInformes() {
+  const profId = await obtenerIdProfesorLogueado();
+  if (!profId) return;
+
+  const { data: dm } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profId);
+  const { data: mats } = await supabaseClient.from("materias").select("*").in("id", dm.map(r => r.materia_id)).order("nombre");
+  
   const selM = document.getElementById("inf-materia");
-  selM.innerHTML = '<option value="">Seleccionar materia...</option>'; selM.disabled = false;
+  selM.innerHTML = '<option value="">Seleccionar materia...</option>'; 
+  selM.disabled = false;
   mats.forEach(m => selM.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
+  
+  // Reset de curso y resultados
+  document.getElementById("inf-curso").innerHTML = '<option value="">Seleccione materia primero...</option>';
+  document.getElementById("inf-curso").disabled = true;
+  document.getElementById("resultado-informe").innerHTML = "";
+}
+
+// Al elegir Materia en Informes, cargamos sus Cursos
+document.getElementById("inf-materia").onchange = async () => {
+  const mId = document.getElementById("inf-materia").value;
+  const profId = await obtenerIdProfesorLogueado();
+  if (!mId || !profId) return;
+
+  const { data } = await supabaseClient.from("profesores_materias_curso")
+    .select("curso_id")
+    .eq("profesor_id", profId)
+    .eq("materia_id", mId);
+    
+  const { data: curs } = await supabaseClient.from("curso")
+    .select("*")
+    .in("id", data.map(r => r.curso_id))
+    .order("nombre");
+    
+  const selC = document.getElementById("inf-curso");
+  selC.innerHTML = '<option value="">Seleccionar curso...</option>'; 
+  selC.disabled = false;
+  
+  // Se incluye el nombre y la orientación (CN, EC, etc.)
+  curs.forEach(c => {
+    selC.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
+  });
+  
+  document.getElementById("resultado-informe").innerHTML = "";
 };
 
-document.getElementById("inf-materia").onchange = async () => {
+// Al elegir Curso en Informes, generamos el reporte de faltas
+document.getElementById("inf-curso").onchange = async () => {
   const cId = document.getElementById("inf-curso").value;
   const mId = document.getElementById("inf-materia").value;
   const divRes = document.getElementById("resultado-informe");
+  if (!cId || !mId) return;
+
   divRes.innerHTML = "Consultando faltas...";
 
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", cId);
+  if (!rel || rel.length === 0) { divRes.innerHTML = "No hay alumnos registrados."; return; }
+  
   const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", rel.map(r => r.alumno_id)).order("apellido");
   const { data: asis } = await supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("curso_id", cId).eq("materia_id", mId);
 
   divRes.innerHTML = "";
   alus.forEach(a => {
-    const f1 = asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length;
-    const f2 = asis.filter(f => f.alumno_id == a.id && f.hora2 === 'ausente').length;
+    const f1 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length : 0;
+    const f2 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora2 === 'ausente').length : 0;
     const total = f1 + f2;
 
-    // Lógica de colores solicitada
-    let colorFalta = "#27ae60"; // Verde por defecto (0 faltas)
+    // Escala de colores solicitada
+    let colorFalta = "#27ae60"; // 0 faltas: Verde
     if (total >= 1 && total <= 4) {
-      colorFalta = "#3498db"; // Azul (1 a 4 faltas)
+      colorFalta = "#3498db"; // 1 a 4: Azul
     } else if (total >= 5) {
-      colorFalta = "#e74c3c"; // Rojo (5 o más faltas)
+      colorFalta = "#e74c3c"; // 5 o más: Rojo
     }
 
     divRes.innerHTML += `
@@ -302,9 +342,18 @@ document.getElementById("inf-materia").onchange = async () => {
       </div>`;
   });
 };
+
+// Actualizamos la navegación para cargar materias al entrar
+function verSeccion(tipo) {
+  document.getElementById('seccion-carga').style.display = tipo === 'carga' ? 'block' : 'none';
+  document.getElementById('seccion-informe').style.display = tipo === 'informe' ? 'block' : 'none';
+  document.getElementById('tab-carga').classList.toggle('active', tipo === 'carga');
+  document.getElementById('tab-informe').classList.toggle('active', tipo === 'informe');
+  
+  if(tipo === 'informe') {
+    cargarMateriasInformes();
+  }
+}
 </script>
 </body>
 </html>
-
-
-
