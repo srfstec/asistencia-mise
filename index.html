@@ -148,12 +148,24 @@ async function actualizarMaterias(profId) {
 materia.onchange = () => { horas.disabled = false; horas.value = ""; curso.disabled = true; lista.innerHTML = ""; btnG.disabled = true; };
 
 horas.onchange = async () => {
-  const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profesor.value).eq("materia_id", materia.value);
-  const { data: curs } = await supabaseClient.from("curso").select("*").in("id", data.map(r => r.curso_id)).order("nombre");
-  curso.innerHTML = '<option value="">Seleccionar curso...</option>'; curso.disabled = false;
-  curs.forEach(c => curso.innerHTML += `<option value="${c.id}">${c.nombre}</option>`);
+  const { data } = await supabaseClient.from("profesores_materias_curso")
+    .select("curso_id")
+    .eq("profesor_id", profesor.value)
+    .eq("materia_id", materia.value);
+    
+  const { data: curs } = await supabaseClient.from("curso")
+    .select("*")
+    .in("id", data.map(r => r.curso_id))
+    .order("nombre");
+    
+  curso.innerHTML = '<option value="">Seleccionar curso...</option>'; 
+  curso.disabled = false;
+  
+  // CORRECCIÓN: Volvemos a sumar el nombre y la orientación (CN, EC, etc.)
+  curs.forEach(c => {
+    curso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
+  });
 };
-
 curso.onchange = () => { if(curso.value) dibujarAlumnos(); };
 
 async function dibujarAlumnos() {
@@ -293,5 +305,6 @@ document.getElementById("inf-materia").onchange = async () => {
 </script>
 </body>
 </html>
+
 
 
