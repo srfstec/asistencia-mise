@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Mise SEC - v.1.0.7</title>
+  <title>App Mise SEC - v.1.0.8</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
@@ -48,7 +48,7 @@
 <div id="app-content" style="display: none;">
   <div class="container">
     <div class="header-container">
-      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.7</span></h2>
+      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.8</span></h2>
       <img src="Logo Mise 2025.png" class="logo">
     </div>
 
@@ -96,7 +96,7 @@
         <select id="inf-alumno"><option value="">Seleccione un alumno...</option></select>
         
         <label>⏳ Bimestre:</label>
-        <select id="inf-bimestre">
+        <select id="inf-bimestre" disabled>
           <option value="todos">Todos</option>
           <option value="1">1ro</option>
           <option value="2">2do</option>
@@ -129,10 +129,7 @@ function verSeccion(tipo) {
   document.getElementById('seccion-informe').style.display = tipo === 'informe' ? 'block' : 'none';
   document.getElementById('tab-carga').classList.toggle('active', tipo === 'carga');
   document.getElementById('tab-informe').classList.toggle('active', tipo === 'informe');
-  
-  if(tipo === 'informe') {
-    cargarMateriasInformes();
-  }
+  if(tipo === 'informe') cargarMateriasInformes();
 }
 
 // LOGIN
@@ -233,6 +230,7 @@ const infTipo = document.getElementById("inf-tipo");
 const infMateria = document.getElementById("inf-materia");
 const infCurso = document.getElementById("inf-curso");
 const infAlumno = document.getElementById("inf-alumno");
+const infBimestre = document.getElementById("inf-bimestre");
 const camposAlumno = document.getElementById("campos-alumno");
 const divRes = document.getElementById("resultado-informe");
 
@@ -241,6 +239,7 @@ infTipo.onchange = () => {
   infCurso.innerHTML = '<option value="">Seleccione materia primero...</option>';
   infCurso.disabled = true;
   camposAlumno.style.display = "none";
+  infBimestre.disabled = true;
   divRes.innerHTML = "";
 };
 
@@ -256,7 +255,6 @@ async function cargarMateriasInformes() {
   if (!profId) return;
   const { data: dm } = await supabaseClient.from("profesores_materias").select("materia_id").eq("profesor_id", profId);
   const { data: mats } = await supabaseClient.from("materias").select("*").in("id", dm.map(r => r.materia_id)).order("nombre");
-  
   infMateria.innerHTML = '<option value="">Seleccionar materia...</option>'; 
   infMateria.disabled = false;
   mats.forEach(m => infMateria.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
@@ -265,36 +263,39 @@ async function cargarMateriasInformes() {
 infMateria.onchange = async () => {
   const profId = await obtenerIdProfesorLogueado();
   if (!infMateria.value || !profId) return;
-
   const { data } = await supabaseClient.from("profesores_materias_curso").select("curso_id").eq("profesor_id", profId).eq("materia_id", infMateria.value);
   const { data: curs } = await supabaseClient.from("curso").select("*").in("id", data.map(r => r.curso_id)).order("nombre");
-    
   infCurso.innerHTML = '<option value="">Seleccionar curso...</option>'; 
   infCurso.disabled = false;
-  curs.forEach(c => {
-    infCurso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
-  });
+  curs.forEach(c => { infCurso.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`; });
   divRes.innerHTML = "";
   camposAlumno.style.display = "none";
 };
 
 infCurso.onchange = async () => {
   if (!infCurso.value) return;
-
   if (infTipo.value === "curso") {
     generarReporteCurso();
   } else {
     camposAlumno.style.display = "block";
+    infBimestre.disabled = true; // Sigue bloqueado hasta elegir alumno
     divRes.innerHTML = "";
     infAlumno.innerHTML = '<option value="">Cargando alumnos...</option>';
-    
     const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", infCurso.value);
     const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", rel.map(r => r.alumno_id)).order("apellido");
-    
     infAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
-    alus.forEach(a => {
-      infAlumno.innerHTML += `<option value="${a.id}">${a.apellido}, ${a.nombre}</option>`;
-    });
+    alus.forEach(a => { infAlumno.innerHTML += `<option value="${a.id}">${a.apellido}, ${a.nombre}</option>`; });
+  }
+};
+
+// Lógica de habilitación de Bimestre
+infAlumno.onchange = () => {
+  if(infAlumno.value) {
+    infBimestre.disabled = false;
+    divRes.innerHTML = "<i>Seleccione bimestre para ver reporte.</i>";
+  } else {
+    infBimestre.disabled = true;
+    divRes.innerHTML = "";
   }
 };
 
@@ -303,7 +304,6 @@ async function generarReporteCurso() {
   const { data: rel } = await supabaseClient.from("alumnos_por_curso").select("alumno_id").eq("curso_id", infCurso.value);
   const { data: alus } = await supabaseClient.from("alumnos").select("*").in("id", rel.map(r => r.alumno_id)).order("apellido");
   const { data: asis } = await supabaseClient.from("asistencia").select("alumno_id, hora1, hora2").eq("curso_id", infCurso.value).eq("materia_id", infMateria.value);
-
   divRes.innerHTML = "";
   alus.forEach(a => {
     const f1 = asis ? asis.filter(f => f.alumno_id == a.id && f.hora1 === 'ausente').length : 0;
@@ -314,9 +314,7 @@ async function generarReporteCurso() {
   });
 }
 
-// Listos para la siguiente fase: Acción de Bimestre
-infAlumno.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Alumno seleccionado. Seleccione bimestre para ver reporte.</i>"; };
-document.getElementById("inf-bimestre").onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Procesando reporte de bimestre...</i>"; };
+infBimestre.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Procesando reporte de bimestre...</i>"; };
 
 </script>
 </body>
