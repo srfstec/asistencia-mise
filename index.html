@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Mise SEC - v.1.0.6</title>
+  <title>App Mise SEC - v.1.0.7</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #000; --card: #B3B3F2; }
@@ -33,7 +33,6 @@
     .btn-alerta { padding: 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin: 5px; width: 100%; }
     
     .contador-faltas { padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-    .titulo-seccion { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -49,7 +48,7 @@
 <div id="app-content" style="display: none;">
   <div class="container">
     <div class="header-container">
-      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.6</span></h2>
+      <h2>Asistencia <span style="font-size: 0.5em; vertical-align: middle; color: #555;">v.1.0.7</span></h2>
       <img src="Logo Mise 2025.png" class="logo">
     </div>
 
@@ -80,10 +79,6 @@
     </div>
 
     <div id="seccion-informe" style="display:none;">
-      <div class="titulo-seccion">
-        <h3>📊 Informes</h3>
-      </div>
-      
       <label>📋 Tipo de Informe:</label>
       <select id="inf-tipo">
         <option value="curso">1. Informe por curso</option>
@@ -91,7 +86,7 @@
       </select>
 
       <label>📚 Materia:</label>
-      <select id="inf-materia" disabled><option value="">Seleccione una materia...</option></select>
+      <select id="inf-materia" disabled><option value="">Seleccionar materia...</option></select>
       
       <label>🏫 Curso:</label>
       <select id="inf-curso" disabled><option value="">Seleccione materia primero...</option></select>
@@ -151,7 +146,7 @@ btnEntrar.onclick = async () => {
     else { loginContainer.style.display = "none"; appContent.style.display = "block"; }
 };
 
-// --- LÓGICA DE CARGA (INTACTA) ---
+// --- LÓGICA DE CARGA (PROHIBIDO CAMBIAR) ---
 fecha.onchange = async () => {
   if (!fecha.value) return;
   const { data } = await supabaseClient.from("profesores").select("*").order("nombre");
@@ -232,7 +227,7 @@ function resetFormulario() {
   fecha.value = ""; materia.disabled = true; curso.disabled = true; horas.disabled = true; lista.innerHTML = ""; mensaje.innerHTML = ""; btnG.disabled = true; window.scrollTo(0,0);
 }
 
-// --- LÓGICA DE INFORMES (MODIFICADA) ---
+// --- LÓGICA DE INFORMES ---
 
 const infTipo = document.getElementById("inf-tipo");
 const infMateria = document.getElementById("inf-materia");
@@ -241,7 +236,6 @@ const infAlumno = document.getElementById("inf-alumno");
 const camposAlumno = document.getElementById("campos-alumno");
 const divRes = document.getElementById("resultado-informe");
 
-// Cambio de Tipo de Informe
 infTipo.onchange = () => {
   infMateria.value = "";
   infCurso.innerHTML = '<option value="">Seleccione materia primero...</option>';
@@ -290,7 +284,6 @@ infCurso.onchange = async () => {
   if (infTipo.value === "curso") {
     generarReporteCurso();
   } else {
-    // Modo Alumno: Cargar lista de alumnos del curso
     camposAlumno.style.display = "block";
     divRes.innerHTML = "";
     infAlumno.innerHTML = '<option value="">Cargando alumnos...</option>';
@@ -321,9 +314,9 @@ async function generarReporteCurso() {
   });
 }
 
-// Evento para cuando se selecciona un Alumno o un Bimestre
-infAlumno.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Listo para procesar bimestre...</i>"; };
-document.getElementById("inf-bimestre").onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Cambio de bimestre detectado...</i>"; };
+// Listos para la siguiente fase: Acción de Bimestre
+infAlumno.onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Alumno seleccionado. Seleccione bimestre para ver reporte.</i>"; };
+document.getElementById("inf-bimestre").onchange = () => { if(infAlumno.value) divRes.innerHTML = "<i>Procesando reporte de bimestre...</i>"; };
 
 </script>
 </body>
