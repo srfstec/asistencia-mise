@@ -313,7 +313,8 @@ async function generarReporteAlumno() {
   if (bim === "1") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-05-06");
   if (bim === "2") query = query.gte("fecha", "2026-05-07").lte("fecha", "2026-08-14");
   if (bim === "3") query = query.gte("fecha", "2026-08-17").lte("fecha", "2026-10-23");
-  if (bim === "4") query = query.gte("fecha", "2026-10-26").lte("fecha", "2026-12-18");
+  if (bim === "4") query = query.gte("fecha", "2026-10-26").lte("fecha", "2026-12-04");
+  if (bim === "total") query = query.gte("fecha", "2026-03-02").lte("fecha", "2026-12-04");
 
   const { data: asis } = await query;
   
@@ -352,3 +353,4 @@ async function generarReporteCurso() {
 </script>
 </body>
 </html>
+
