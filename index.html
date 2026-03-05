@@ -59,25 +59,28 @@
 
     <div id="seccion-carga">
       <label>📅 Fecha:</label>
-      <input type="date" id="fecha">
-      <label>👤 Profesor:</label>
-      <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
-      <label>📚 Materia:</label>
-      <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
-      <label>⏱️ Horas:</label>
-      <select id="cant-horas" disabled>
-        <option value="" selected disabled>Seleccionar horas...</option>
-        <option value="1">1 Hora</option>
-        <option value="2">2 Horas</option>
-      </select>
-      <label>🏫 Curso:</label>
-      <select id="curso" disabled><option value="">Seleccione materia...</option></select>
-      <hr>
-      <div id="lista-alumnos"></div>
-      <div id="mensaje"></div>
-      <button id="guardar" disabled>Guardar asistencia</button>
+    <input type="date" id="fecha">
+    <label>👤 Profesor:</label>
+    <select id="profesor" disabled><option value="">Seleccione fecha...</option></select>
+    <label>📚 Materia:</label>
+    <select id="materia" disabled><option value="">Seleccione profesor...</option></select>
+    <label>⏱️ Cantidad de horas:</label>
+    <select id="cant-horas" disabled>
+      <option value="" selected disabled>Seleccionar horas...</option>
+      <option value="1">1 Hora</option>
+      <option value="2">2 Horas</option>
+    </select>
+    <label>🏫 Curso:</label>
+    <select id="curso" disabled><option value="">Seleccione materia...</option></select>
+    <hr>
+    <div id="lista-alumnos"></div>
+    <div id="mensaje"></div>
+    <button id="guardar" disabled>Guardar asistencia</button>
+    <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 13px; color: #2c3e50;">
+      Creador <b>Santiago Franco</b> © 2026
     </div>
-
+  </div>
+</div>
     <div id="seccion-informe" style="display:none;">
       <label>📚 Materia:</label>
       <select id="inf-materia" disabled><option value="">Seleccione una materia...</option></select>
@@ -268,8 +271,8 @@ document.getElementById("inf-materia").onchange = async () => {
 };
 
 document.getElementById("inf-curso").onchange = async () => {
-  const cId = document.getElementById("inf-curso").value;
   const mId = document.getElementById("inf-materia").value;
+  const cId = document.getElementById("inf-curso").value;
   const divRes = document.getElementById("resultado-informe");
   if (!cId || !mId) return;
 
@@ -294,3 +297,4 @@ document.getElementById("inf-curso").onchange = async () => {
 </script>
 </body>
 </html>
+
