@@ -241,7 +241,9 @@ async function cargarCursosInformes() {
   const { data } = await supabaseClient.from("curso").select("*").order("nombre");
   const selC = document.getElementById("inf-curso");
   selC.innerHTML = '<option value="">Seleccionar curso...</option>';
-  data.forEach(c => selC.innerHTML += `<option value="${c.id}">${c.nombre}</option>`);
+ data.forEach(c => {
+    selC.innerHTML += `<option value="${c.id}">${c.nombre} ${c.curso_base || ''}</option>`;
+  });
 }
 
 document.getElementById("inf-curso").onchange = async () => {
@@ -275,3 +277,4 @@ document.getElementById("inf-materia").onchange = async () => {
 </script>
 </body>
 </html>
+
